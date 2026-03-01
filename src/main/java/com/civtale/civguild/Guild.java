@@ -15,7 +15,7 @@ public class Guild {
         this.name = name;
         this.uuid = UUID.randomUUID(); //get a unique UUID for this guild
         this.members = new HashMap<>();
-        this.members.put(leaderUUID, new GuildMember()); //save the leader as the first member TODO setup GuildMember class & add constructors
+        this.members.put(leaderUUID, new GuildMember(GuildRank.LEADER)); //save the leader as the first member TODO setup GuildMember class & add constructors
     }
 
     public String getName() {
