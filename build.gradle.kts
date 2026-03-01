@@ -3,7 +3,7 @@ plugins {
     id("hytale-mod") version "0.+"
 }
 
-group = "com.example"
+group = "com.civtale"
 version = "0.1.0"
 val javaVersion = 25
 
@@ -70,6 +70,12 @@ tasks.withType<Jar> {
                 .map { "${version}-${it}" }
                 .getOrElse(version.toString())
     }
+
+    //BELOW LINES ADDED BY TOMMY - CHECK
+    // Avoid duplicate pages
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    // include resources here
+    from("src/main/resources")
 }
 
 publishing {

@@ -1,11 +1,11 @@
 {
-  "Group": "${plugin_group}",
-  "Name": "${plugin_name}",
-  "Version": "${plugin_version}",
-  "Description": "${plugin_description}",
+  "Group": "CivTale",
+  "Name": "CivGuild",
+  "Version": "0.1.0",
+  "Description": "Guilds for CivTale",
   "Authors": [
     {
-      "Name": "${plugin_author}"
+      "Name": "TommyD"
     }
   ],
   "Website": "${plugin_website}",
@@ -14,5 +14,5 @@
   "OptionalDependencies": {},
   "DisabledByDefault": false,
   "IncludesAssetPack": true,
-  "Main": "${plugin_main_entrypoint}"
+  "Main": "com.civtale.civguild.CivGuildPlugin"
 }

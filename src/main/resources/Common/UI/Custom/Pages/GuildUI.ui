@@ -1,0 +1,52 @@
+// UI file simply describes the layout
+// See other syntax for styles & backgrounds - NOTE everything in this file must be perfect or will fail to load on the client
+//Also note this UI process is being replaced soon
+
+$C = "../Common.ui"; //import Common.ui
+
+// Styles seem broken
+/*@GuildButtonStyle = TextButtonStyle( //Defines a Style
+    Default: (Background: #3a7bd5, LabelStyle: (FontSize: 16, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Hovered: (Background: #4a8be5, LabelStyle: (FontSize: 16, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Pressed: (Background: #2a6bc5, LabelStyle: (FontSize: 16, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+);*/
+
+Group {
+    Anchor: (Width: 400, Height: 280); //Size
+    Background: #1a1a2e(0.95); //Colour //opacity not correct in tutorial (0.95)
+    LayoutMode: Top; //Element arrangement, from the top (Left, Bottom, Right)
+    Padding: (Full:20); //Element Spacing
+
+    Label #Title { //Element & it's name
+        Text: "Hello !";
+        Anchor: (Height: 40); //Fixed Element Size, use FlexWeight: 1; to use any remaining space, if multiple use this space is divded by the weight - ie 3 with weight one = 1/3 each
+        Style: (FontSize: 24, TextColor: #ffffff, HorizontalAlignment: Center); //Text styling
+    }
+
+    Label #Subtitle {
+        Text: "Guild name";
+        Anchor: (Height: 25);
+        Style: (FontSize: 14, TextColor: #888888, HorizontalAlignment: Center);
+    }
+
+    Group { Anchor: (Height: 10); } //Breaks up elements ??
+
+    Label #Prompt {
+        Text: "Enter here: ";
+        Anchor: (Height: 25);
+        Style: (FontSize: 16, TextColor: #cccccc);
+    }
+
+    $C.@TextField #GuildInput { //Text input field
+        Anchor: (Height: 40);
+        PlaceholderText: "type here...";
+    }
+
+    Group { Anchor: (Height: 10); }
+
+    TextButton #CreateGuildButton {
+        Anchor: (Height: 45);
+        Text: "CreateGuild!";
+        //Style: @GuildButtonStyle;
+    }
+}
