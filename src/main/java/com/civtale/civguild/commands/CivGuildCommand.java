@@ -14,6 +14,7 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
 import java.util.Arrays;
+import java.util.UUID;
 
 public class CivGuildCommand extends AbstractPlayerCommand {
 
@@ -45,6 +46,12 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                 GuildUIPage page = new GuildUIPage(playerRef);
                 //Use player's PageManager to open the new page
                 player.getPageManager().openCustomPage(ref, store, page);
+                break;
+            case "info": //Displays guild information
+                UUID uuid = GuildManager.getGuildUUID(args[2]);
+                uuid != null ?
+                        playerRef.sendMessage(Message.raw(GuildManager.getGuild(uuid)))
+                        : playerRef.sendMessage(Message.raw("[CivGuild]: Unknown guild!"));
                 break;
             case "create": // Create a new guild - playerRef (needs the uuid) & guild's name
                 guildManager.createGuild(playerRef, args[2]); //TODO check these methods & params, must have right amount of args, manager should do param checks so possibly just get bool from manager and run error commands

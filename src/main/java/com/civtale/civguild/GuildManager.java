@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public class GuildManager {
     private static GuildManager instance; //ref to self for other classes to get
-    private final Map<UUID, Guild> guilds = new HashMap<>(); //Map of all guilds
+    private static final Map<UUID, Guild> guilds = new HashMap<>(); //Map of all guilds
     
     private GuildManager() {
         //TODO load()
@@ -27,8 +27,22 @@ public class GuildManager {
         //TODO throw exception if not instanced yet
         return instance;
     }
-    
-    
+
+    //Returns guild UUID from String
+    public static UUID getGuildUUID(String guildName) {
+        UUID uuid = null; //stays null if no match found
+        //stream of Guild objects -> if lowercase name matches guildName
+        guilds.values().stream().forEach(guild -> {
+            if (guild.getName().equalsIgnoreCase(guildName)) {
+                uuid = guild.getUuid(); /////Fix this shit
+            }});
+        return uuid;
+    }
+
+    public static Guild getGuild(UUID uuid) {
+        return guilds.get(uuid);
+    }
+
     //TODO below are all placeholders, need to determine exaclt what they do, what params the need
     public void createGuild(PlayerRef leaderRef, String guildName) {
         //TODO ensure playerRef is actually a player? & not part of another guild
@@ -36,6 +50,7 @@ public class GuildManager {
         guilds.put(guild.getUuid(), guild);
         //TEMP
         leaderRef.sendMessage(Message.raw("[CivGuild]: Guild Created!\n" + guild));
+
     }
 
     public void disbandGuild(String arg) {
