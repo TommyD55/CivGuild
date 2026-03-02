@@ -19,8 +19,11 @@ public enum GuildRank {
     public static GuildRank stringToRank(String rankName) {
         switch (rankName.toLowerCase()) {
             case "member":
+                return GuildRank.MEMBER;
             case "coleader":
+                return GuildRank.COLEADER;
             case "leader":
+                return GuildRank.LEADER;
             default:
                 return null;
         }

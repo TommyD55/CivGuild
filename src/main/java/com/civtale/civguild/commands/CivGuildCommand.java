@@ -2,17 +2,21 @@ package com.civtale.civguild.commands;
 
 import com.civtale.civguild.Guild;
 import com.civtale.civguild.GuildManager;
+import com.civtale.civguild.GuildMember;
 import com.civtale.civguild.GuildRank;
 import com.civtale.civguild.pages.GuildUIPage;
+import com.hypixel.hytale.builtin.buildertools.tooloperations.transform.Translate;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayerCommand;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.modules.i18n.parser.LangFileParser;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import org.intellij.lang.annotations.Language;
 import org.jspecify.annotations.NonNull;
 
 import java.util.Arrays;
@@ -72,6 +76,34 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                 } else {
                     playerRef.sendMessage(Message.raw("[CivGuild]: Unknown guild"));
                 }
+                break;
+
+            case "list_guilds": //list all guilds by name
+                //no perms requirements
+                if (args.length != 2) { //ensure args match this subcommand
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg list_guilds"));
+                    return;
+                }
+                playerRef.sendMessage(Message.raw("[CivGuild]: Listing guilds"));
+                for (Guild guild : guildManager.getGuilds()){
+                    playerRef.sendMessage(Message.raw("\n" + guild.getName()));
+                }
+                break;
+
+            case "list_members": //list all players in a guild
+                //no perms requirements
+                if (args.length != 3) { //ensure args match this subcommand
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg list_members <Guild_Name>"));
+                    return;
+                }
+                UUID guildUuid = guildManager.getGuildUUID(args[2].replace("_", " "));
+                if (guildUuid == null) {
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Unknown guild"));
+                }
+                playerRef.sendMessage(Message.raw("[CivGuild]: Listing members"));
+                guildManager.getGuild(guildUuid).getMembers().forEach((member) -> {
+                    playerRef.sendMessage(Message.raw("\n[" + member.getRank().getDisplayName() + "] " + member.getPlayerName())); //[RANK] Name
+                });
                 break;
 
             case "create": // Create a new guild - playerRef (needs the uuid) & guild's name
@@ -180,6 +212,8 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                 " - /cg help\n" +
                 " - /cg ui\n" +
                 " - /cg info <Guild_Name>\n" +
+                " - /cg list_guilds>\n" +
+                " - /cg list_members <Guild_Name>\n" +
                 " - /cg create <Guild_Name>\n" +
                 " - /cg disband\n" +
                 " - /cg join <Guild_Name>\n" +

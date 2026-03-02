@@ -4,6 +4,7 @@ import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -43,12 +44,15 @@ public class GuildManager {
         return guilds.get(uuid);
     }
 
+    public Collection<Guild> getGuilds() { return guilds.values(); }
+
+
     //TODO below are all placeholders, need to determine exaclt what they do, what params the need
     //TODO currently doing bool outputs for command errors, may need to use error codes for more info (could do an advanced enum errors so they can be printed & translated)
 
     public boolean createGuild(PlayerRef leaderRef, String guildName) {
         //TODO ensure playerRef is actually a player? & not part of another guild, check name for non-letter chars etc etc
-        Guild guild = new Guild(guildName, leaderRef.getUuid());
+        Guild guild = new Guild(guildName, leaderRef);
         guilds.put(guild.getUuid(), guild); //save guild against guild uuid
         players.put(leaderRef.getUuid(), guild.getUuid()); //save player uuid against guild uuid
 
