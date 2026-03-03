@@ -55,12 +55,10 @@ public class DataStorage {
                 JsonArray membersArray = new JsonArray(); //run through each member
                 for (GuildMember member : guild.getMembers()) { //build a json element and add the member's data to it
                     JsonObject memberObj = new JsonObject();
-                    memberObj.addProperty("playerName", member.getPlayerName());
                     memberObj.addProperty("playerUuid", member.getPlayerUuid().toString());
                     memberObj.addProperty("rank", member.getRank().toString()); //NOTE toString used since loadData() uses valueOf()
                     //TODO add any other member variables
                     membersArray.add(memberObj);
-
                 }
 
                 //Add members to the guild, then the guild to the json array
@@ -106,12 +104,11 @@ public class DataStorage {
                         JsonObject memberObj = memberElement.getAsJsonObject(); //json element to json object
 
                         UUID playerUuid = UUID.fromString(memberObj.get("playerUuid").getAsString()); //Member UUID
-                        String playerName = memberObj.get("playerName").getAsString(); //Member name
                         GuildRank rank = GuildRank.valueOf(memberObj.get("rank").getAsString()); //Member rank
                         //TODO any other member variables
 
                         //Create Member object and save to member map
-                        GuildMember member = new GuildMember(playerName, playerUuid, rank);
+                        GuildMember member = new GuildMember(playerUuid, rank);
                         members.put(playerUuid, member);
                     }
                     //Create guild object & load in all above retrieved Data

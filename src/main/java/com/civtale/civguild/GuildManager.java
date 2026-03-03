@@ -56,6 +56,10 @@ public class GuildManager {
     //TODO below are all placeholders, need to determine exaclt what they do, what params the need
     //TODO currently doing bool outputs for command errors, may need to use error codes for more info (could do an advanced enum errors so they can be printed & translated)
 
+    //Below funcs require a playerRef to who called it, Any output is given back to this player
+    //The playerRef isn't used for anything else, since it can be called by someone in a different guild (admins), the guild being managed must be passed in as well
+    //Funcs must check that players perms to whether or not they have perms, or if they're OP
+
     public boolean createGuild(PlayerRef leaderRef, String guildName) {
         //TODO ensure playerRef is actually a player? & not part of another guild, check name for non-letter chars etc etc
         Guild guild = new Guild(guildName, leaderRef);

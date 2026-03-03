@@ -14,11 +14,13 @@ import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayer
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.modules.i18n.parser.LangFileParser;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.intellij.lang.annotations.Language;
 import org.jspecify.annotations.NonNull;
 
+import java.security.Permission;
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -46,7 +48,6 @@ public class CivGuildCommand extends AbstractPlayerCommand {
         //Match the 2nd arg/Subcommand
         switch (args[1].toLowerCase()) { //subcommand arg must be lowercase to match, the rest must maintain capitals & will handle themselves
             case "ui": // open the CivGuild UI
-                // No perms requirements
                 if (args.length != 2) { //ensure args match this subcommand
                     playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg ui"));
                     return;
@@ -65,7 +66,6 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                 break;
 
             case "info": //Displays guild information
-                //no perms requirements
                 if (args.length != 3) { //ensure args match this subcommand
                     playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg info <Guild_Name>"));
                     return;
@@ -79,7 +79,6 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                 break;
 
             case "list_guilds": //list all guilds by name
-                //no perms requirements
                 if (args.length != 2) { //ensure args match this subcommand
                     playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg list_guilds"));
                     return;
@@ -95,7 +94,6 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                 break;
 
             case "list_members": //list all players in a guild
-                //no perms requirements
                 if (args.length != 3) { //ensure args match this subcommand
                     playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg list_members <Guild_Name>"));
                     return;
@@ -107,26 +105,20 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                 }
                 playerRef.sendMessage(Message.raw("[CivGuild]: Listing members"));
                 guildManager.getGuild(guildUuid).getMembers().forEach((member) -> {
-                    playerRef.sendMessage(Message.raw("[" + member.getRank().getDisplayName() + "] " + member.getPlayerName())); //[RANK] Name
+                    String memberName = Universe.get().getPlayer(member.getPlayerUuid()).getUsername(); //TODO check this works if player offline
+                    playerRef.sendMessage(Message.raw("[" + member.getRank().getDisplayName() + "] " + memberName)); //[RANK] Name
                 });
                 break;
 
             case "create": // Create a new guild - playerRef (needs the uuid) & guild's name
-                //no perms requirements
                 if (args.length != 3) { //ensure args match this subcommand
                     playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg create <Guild_Name>"));
                     return;
                 }
-                // TODO check these methods & params, must have right amount of args, manager should do param checks so possibly just get bool from manager and run error commands
-                if (!guildManager.createGuild(playerRef, args[2].replace("_", " "))){//replacing spaces with _ plays nice with the arg system, something to polish in the future
-                    playerRef.sendMessage(Message.raw("[CivGuild]: Guild could not be created")); //TODO reason
-                } else {
-                    playerRef.sendMessage(Message.raw("[CivGuild]: Guild created"));
-                }
+                guildManager.createGuild(playerRef, args[2].replace("_", " ")); //TODO replacing spaces with _ plays nice with the arg system, something to polish in the future
                 break;
 
             case "disband": // Disband a guild - guild's name
-                //no perms requirements - guild manager checks rank
                 if (args.length != 2) { //ensure args match this subcommand
                     playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg disband"));
                     return;
@@ -139,7 +131,6 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                 break;
 
             case "join": // Request to join a guild - Player & guild's name //TODO implement the invites
-                //no perms requirements
                 if (args.length != 3) { //ensure args match this subcommand
                     playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg join <Guild_Name>"));
                     return;
@@ -148,7 +139,6 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                 break;
 
             case "accept": // Accept a request to join current guild - Player & requester's name //TODO implement the invites
-                //no perms requirements - guild manager checks rank
                 if (args.length != 2) { //ensure args match this subcommand
                     playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg accept"));
                     return;
@@ -157,7 +147,6 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                 break;
 
             case "reject": // Reject a request to join current guild - Player & requester's name //TODO implement the invites
-                //no perms requirements - guild manager checks rank
                 if (args.length != 2) { //ensure args match this subcommand
                     playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg reject"));
                     return;
@@ -166,7 +155,6 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                 break;
 
             case "kick": // Remove a player from the current guild - Player & removing player's name
-                //no perms requirements - guild manager checks rank
                 if (args.length != 3) { //ensure args match this subcommand
                     playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg kick <PlayerName>"));
                     return;
@@ -175,7 +163,6 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                 break;
 
             case "assign": //Assign a rank to a player - Player, player's name, GuildRank
-                //no perms requirements - guild manager checks rank
                 if (args.length != 4) { //ensure args match this subcommand
                     playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg assign <PlayerName> [member/coleader/leader]"));
                     return;
@@ -189,7 +176,6 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                 break;
 
             case "rename": //rename the current guild - Player & new name
-                //no perms requirements - guild manager checks rank
                 if (args.length != 3) { //ensure args match this subcommand
                     playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg rename <Guild_Name>"));
                     return;
@@ -198,7 +184,6 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                 break;
 
             case "setspawn": //setspawn of the current guild - Player
-                //no perms requirements - guild manager checks rank
                 if (args.length != 2) { //ensure args match this subcommand
                     playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg setspawn"));
                     return;
@@ -228,4 +213,5 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                 "\n - /cg rename <Guild_Name>" +
                 "\n - /cg setspawn"));
     }
+
 }
