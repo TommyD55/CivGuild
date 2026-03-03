@@ -84,9 +84,13 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                     playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg list_guilds"));
                     return;
                 }
+                if (guildManager.getGuilds().isEmpty()) {
+                    playerRef.sendMessage(Message.raw("[CivGuild]: No guilds exist"));
+                    return;
+                }
                 playerRef.sendMessage(Message.raw("[CivGuild]: Listing guilds"));
                 for (Guild guild : guildManager.getGuilds()){
-                    playerRef.sendMessage(Message.raw("\n" + guild.getName()));
+                    playerRef.sendMessage(Message.raw(guild.getName()));
                 }
                 break;
 
@@ -99,10 +103,11 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                 UUID guildUuid = guildManager.getGuildUUID(args[2].replace("_", " "));
                 if (guildUuid == null) {
                     playerRef.sendMessage(Message.raw("[CivGuild]: Unknown guild"));
+                    return;
                 }
                 playerRef.sendMessage(Message.raw("[CivGuild]: Listing members"));
                 guildManager.getGuild(guildUuid).getMembers().forEach((member) -> {
-                    playerRef.sendMessage(Message.raw("\n[" + member.getRank().getDisplayName() + "] " + member.getPlayerName())); //[RANK] Name
+                    playerRef.sendMessage(Message.raw("[" + member.getRank().getDisplayName() + "] " + member.getPlayerName())); //[RANK] Name
                 });
                 break;
 
@@ -208,19 +213,19 @@ public class CivGuildCommand extends AbstractPlayerCommand {
 
     //help output
     private void helpMessage(PlayerRef playerRef) {
-        playerRef.sendMessage(Message.raw("[CivGuild]: Please see below command line options, some are subject to guild status or rank permissions\n" +
-                " - /cg help\n" +
-                " - /cg ui\n" +
-                " - /cg info <Guild_Name>\n" +
-                " - /cg list_guilds>\n" +
-                " - /cg list_members <Guild_Name>\n" +
-                " - /cg create <Guild_Name>\n" +
-                " - /cg disband\n" +
-                " - /cg join <Guild_Name>\n" +
-                " - /cg [accept/reject]\n" +
-                " - /cg kick <PlayerName>\n" +
-                " - /cg assign <PlayerName> [member/coleader/leader]\n" +
-                " - /cg rename <Guild_Name>\n" +
-                " - /cg setspawn\n"));
+        playerRef.sendMessage(Message.raw("[CivGuild]: Please see below command line options, some are subject to guild status or rank permissions" +
+                "\n - /cg help" +
+                "\n - /cg ui" +
+                "\n - /cg info <Guild_Name>" +
+                "\n - /cg list_guilds>" +
+                "\n - /cg list_members <Guild_Name>" +
+                "\n - /cg create <Guild_Name>" +
+                "\n - /cg disband" +
+                "\n - /cg join <Guild_Name>" +
+                "\n - /cg [accept/reject]" +
+                "\n - /cg kick <PlayerName>" +
+                "\n - /cg assign <PlayerName> [member/coleader/leader]" +
+                "\n - /cg rename <Guild_Name>" +
+                "\n - /cg setspawn"));
     }
 }

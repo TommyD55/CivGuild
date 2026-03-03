@@ -1,0 +1,18 @@
+{
+  "Group": "CivTale",
+  "Name": "CivGuild",
+  "Version": "0.1.0",
+  "Description": "Guilds for CivTale",
+  "Authors": [
+    {
+      "Name": "TommyD"
+    }
+  ],
+  "Website": "",
+  "ServerVersion": "*",
+  "Dependencies": {},
+  "OptionalDependencies": {},
+  "DisabledByDefault": false,
+  "IncludesAssetPack": true,
+  "Main": "com.civtale.civguild.CivGuildPlugin"
+}

@@ -28,8 +28,7 @@ public class GuildManager {
         }
         logger = pluginLogger;
         //Load save data - DataStorage must be init before manager
-        guilds.putAll(DataStorage.getInstance().loadGuilds());
-        players.putAll(DataStorage.getInstance().loadPlayers());
+        DataStorage.getInstance().loadData(guilds, players);
     }
     
     public static GuildManager getInstance() {
@@ -64,8 +63,7 @@ public class GuildManager {
         players.put(leaderRef.getUuid(), guild.getUuid()); //save player uuid against guild uuid
 
         //Save changes //TODO a better way than rewriting entire files? May need individual files for each player/guild
-        DataStorage.getInstance().saveGuilds(guilds);
-        DataStorage.getInstance().savePlayers(players);
+        DataStorage.getInstance().saveData(guilds, players);
 
         return true;
     }

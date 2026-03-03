@@ -30,7 +30,7 @@ public class CivGuildPlugin extends JavaPlugin {
             this.getCommandRegistry().registerCommand(new CivGuildCommand()); //CivGuild Command
 
         } catch (Exception e) {
-            LOGGER.at(Level.SEVERE).log("[CivGuild] Failed setup: %s", e.getMessage());
+            LOGGER.at(Level.SEVERE).log("Failed setup: ", e.getMessage());
         }
     }
 }

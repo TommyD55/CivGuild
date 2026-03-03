@@ -16,6 +16,7 @@ public enum GuildRank {
 
     public String getDisplayName() {return this.displayName;}
 
+
     public static GuildRank stringToRank(String rankName) {
         switch (rankName.toLowerCase()) {
             case "member":
