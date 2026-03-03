@@ -1,5 +1,7 @@
 package com.civtale.civguild;
 
+import com.civtale.civguild.util.DataStorage;
+import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
@@ -11,6 +13,7 @@ import java.util.UUID;
 
 public class GuildManager {
     private static GuildManager instance; //ref to self for other classes to get
+    private static HytaleLogger logger;
     private static final Map<UUID, Guild> guilds = new HashMap<>(); //Map of all guilds
     private static final Map<UUID, UUID> players = new HashMap<>(); //Map of player UUID against guild UUID
     
@@ -19,10 +22,14 @@ public class GuildManager {
     }
     
     //Initialise GuildManager which loads data from save
-    public static void initialize() {
+    public static void initialize(HytaleLogger pluginLogger) {
         if (instance == null) {
             instance = new GuildManager();
         }
+        logger = pluginLogger;
+        //Load save data - DataStorage must be init before manager
+        guilds.putAll(DataStorage.getInstance().loadGuilds());
+        players.putAll(DataStorage.getInstance().loadPlayers());
     }
     
     public static GuildManager getInstance() {
@@ -55,6 +62,10 @@ public class GuildManager {
         Guild guild = new Guild(guildName, leaderRef);
         guilds.put(guild.getUuid(), guild); //save guild against guild uuid
         players.put(leaderRef.getUuid(), guild.getUuid()); //save player uuid against guild uuid
+
+        //Save changes //TODO a better way than rewriting entire files? May need individual files for each player/guild
+        DataStorage.getInstance().saveGuilds(guilds);
+        DataStorage.getInstance().savePlayers(players);
 
         return true;
     }

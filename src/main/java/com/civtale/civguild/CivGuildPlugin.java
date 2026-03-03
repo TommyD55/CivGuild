@@ -1,6 +1,7 @@
 package com.civtale.civguild;
 
 import com.civtale.civguild.commands.CivGuildCommand;
+import com.civtale.civguild.util.DataStorage;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
@@ -22,7 +23,8 @@ public class CivGuildPlugin extends JavaPlugin {
         try { //wrapping everything in try-catch in case an exception occurs it can be tracked
 
             //Initialise plugin objects
-            GuildManager.initialize();
+            DataStorage.initialize(this.getDataDirectory(), LOGGER); //JavaPlugin knows of directory to use
+            GuildManager.initialize(LOGGER);
 
             //Registers
             this.getCommandRegistry().registerCommand(new CivGuildCommand()); //CivGuild Command
