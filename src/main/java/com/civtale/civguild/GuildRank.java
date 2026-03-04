@@ -9,7 +9,7 @@ public enum GuildRank {
     private final int permissionLevel;
     //have all access parameters here by assigning a level to each rank and ie canInvite(){return level>=2}
 
-    private GuildRank(String displayName, int permissionLevel) {
+    GuildRank(String displayName, int permissionLevel) {
         this.displayName = displayName;
         this.permissionLevel = permissionLevel;
     }
@@ -18,15 +18,35 @@ public enum GuildRank {
 
 
     public static GuildRank stringToRank(String rankName) {
-        switch (rankName.toLowerCase()) {
-            case "member":
-                return GuildRank.MEMBER;
-            case "coleader":
-                return GuildRank.COLEADER;
-            case "leader":
-                return GuildRank.LEADER;
-            default:
-                return null;
-        }
+        return switch (rankName.toLowerCase()) {
+            case "member" -> GuildRank.MEMBER;
+            case "coleader" -> GuildRank.COLEADER;
+            case "leader" -> GuildRank.LEADER;
+            default -> null;
+        };
+    }
+
+    public int getPermissionLevel() {
+        return this.permissionLevel;
+    }
+
+    //Permissions
+    public boolean canDisband() {
+        return this.permissionLevel >= 3;
+    }
+    public boolean canAddMember() {
+        return this.permissionLevel >= 2;
+    }
+    public boolean canKickMember() { //Kicked member must have a lower rank
+        return this.permissionLevel >= 2;
+    }
+    public boolean canAssignRank() { //pro/demoted member must have a lower rank
+        return this.permissionLevel >= 2;
+    }
+    public boolean canRename() {
+        return this.permissionLevel >= 3;
+    }
+    public boolean canSetSpawn() {
+        return this.permissionLevel >= 2;
     }
 }

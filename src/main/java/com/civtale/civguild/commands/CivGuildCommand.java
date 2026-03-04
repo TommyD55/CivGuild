@@ -2,26 +2,23 @@ package com.civtale.civguild.commands;
 
 import com.civtale.civguild.Guild;
 import com.civtale.civguild.GuildManager;
-import com.civtale.civguild.GuildMember;
 import com.civtale.civguild.GuildRank;
 import com.civtale.civguild.pages.GuildUIPage;
-import com.hypixel.hytale.builtin.buildertools.tooloperations.transform.Translate;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.protocol.Vector3d;
 import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.NameMatching;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayerCommand;
 import com.hypixel.hytale.server.core.entity.entities.Player;
-import com.hypixel.hytale.server.core.modules.i18n.parser.LangFileParser;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import org.intellij.lang.annotations.Language;
 import org.jspecify.annotations.NonNull;
 
-import java.security.Permission;
-import java.util.Arrays;
+import java.util.Objects;
 import java.util.UUID;
 
 public class CivGuildCommand extends AbstractPlayerCommand {
@@ -33,26 +30,22 @@ public class CivGuildCommand extends AbstractPlayerCommand {
 
     @Override
     protected void execute(@NonNull CommandContext commandContext, @NonNull Store<EntityStore> store, @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
-
         //Process the command into arguments
-        String inputString = commandContext.getInputString(); //get full command
-        String[] args = inputString.trim().split("\\s+"); //split command into components //trim removes extra spaces //split separates into multiple Strings separated by spaces "\\s+"
+        String[] args = commandContext.getInputString().trim().split("\\s+"); //trim removes extra spaces //split separates into multiple Strings separated by spaces "\\s+"
         //Sift out invalid input
         if (args.length < 2) {
             helpMessage(playerRef);
-            return;
         }
-        // Common refs
-        GuildManager guildManager = GuildManager.getInstance();
+        GuildManager guildManager = GuildManager.getInstance(); //access to guild manager
 
         //Match the 2nd arg/Subcommand
         switch (args[1].toLowerCase()) { //subcommand arg must be lowercase to match, the rest must maintain capitals & will handle themselves
-            case "ui": // open the CivGuild UI
+            case "ui": //Open the CivGuild UI
                 if (args.length != 2) { //ensure args match this subcommand
                     playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg ui"));
                     return;
                 }
-                //Create instance of the Guild UI page
+                //Create instance of the Guild UI page //TODO once hotkey is implemented, the below could probably be a func to call elsewhere
                 GuildUIPage page = new GuildUIPage(playerRef);
                 //Use player's PageManager to open the new page
                 Player player = store.getComponent(ref, Player.getComponentType()); //Retrieve player component by looking up entity ref & component type
@@ -60,8 +53,7 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                 player.getPageManager().openCustomPage(ref, store, page);
                 break;
 
-            case "help":
-                //no perms & avoid further checks, just display the help info
+            case "help": //Displays help information
                 helpMessage(playerRef);
                 break;
 
@@ -70,12 +62,9 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                     playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg info <Guild_Name>"));
                     return;
                 }
-                UUID uuid = guildManager.getGuildUUID(args[2].replace("_", " ")); //replacing spaces with _ plays nice with the arg system, something to polish in the future
-                if (uuid != null) {
-                    playerRef.sendMessage(Message.raw(guildManager.getGuild(uuid).toString()));
-                } else {
-                    playerRef.sendMessage(Message.raw("[CivGuild]: Unknown guild"));
-                }
+                Guild guildInfo = lookupGuild(args[2]);
+                if (guildInfo != null) { playerRef.sendMessage(Message.raw(guildInfo.toString()));
+                } else { playerRef.sendMessage(Message.raw("[CivGuild]: Unknown guild"));}
                 break;
 
             case "list_guilds": //list all guilds by name
@@ -87,7 +76,7 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                     playerRef.sendMessage(Message.raw("[CivGuild]: No guilds exist"));
                     return;
                 }
-                playerRef.sendMessage(Message.raw("[CivGuild]: Listing guilds"));
+                playerRef.sendMessage(Message.raw("[CivGuild]: Listing guilds..."));
                 for (Guild guild : guildManager.getGuilds()){
                     playerRef.sendMessage(Message.raw(guild.getName()));
                 }
@@ -98,73 +87,131 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                     playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg list_members <Guild_Name>"));
                     return;
                 }
-                UUID guildUuid = guildManager.getGuildUUID(args[2].replace("_", " "));
-                if (guildUuid == null) {
+                Guild guild = lookupGuild(args[2]);
+                if (guild == null) {
                     playerRef.sendMessage(Message.raw("[CivGuild]: Unknown guild"));
                     return;
                 }
-                playerRef.sendMessage(Message.raw("[CivGuild]: Listing members"));
-                guildManager.getGuild(guildUuid).getMembers().forEach((member) -> {
-                    String memberName = Universe.get().getPlayer(member.getPlayerUuid()).getUsername(); //TODO check this works if player offline
+                playerRef.sendMessage(Message.raw("[CivGuild]: Listing members..."));
+                guild.getMembers().forEach((member) -> {
+                    UUID playerUuid = member.getPlayerUuid();
+                    String memberName = Objects.requireNonNull(Universe.get().getPlayer(playerUuid)).getUsername();
                     playerRef.sendMessage(Message.raw("[" + member.getRank().getDisplayName() + "] " + memberName)); //[RANK] Name
                 });
                 break;
 
-            case "create": // Create a new guild - playerRef (needs the uuid) & guild's name
+            case "create": // Create a new guild
+                if (args.length != 4) { //ensure args match this subcommand
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg create <Guild_Name> <Leader_Name>"));
+                    return;
+                }
+                PlayerRef leader = Universe.get().getPlayerByUsername(args[3], NameMatching.EXACT);
+                if (leader == null) {
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Unknown player name"));
+                    return;
+                }
+                guildManager.createGuild(playerRef, args[2].replace("_", " "), leader); //Passing in a name rather than a guild object so process the spaces here
+                break;
+
+            case "disband": // Disband a guild
                 if (args.length != 3) { //ensure args match this subcommand
-                    playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg create <Guild_Name>"));
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg disband <Guild_Name>"));
                     return;
                 }
-                guildManager.createGuild(playerRef, args[2].replace("_", " ")); //TODO replacing spaces with _ plays nice with the arg system, something to polish in the future
-                break;
-
-            case "disband": // Disband a guild - guild's name
-                if (args.length != 2) { //ensure args match this subcommand
-                    playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg disband"));
+                Guild guildDisband = lookupGuild(args[2]);
+                if (guildDisband == null) {
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Unknown guild"));
                     return;
                 }
-                if (!guildManager.disbandGuild(playerRef)){
-                    playerRef.sendMessage(Message.raw("[CivGuild]: Guild could not be disbanded")); //TODO reason
-                } else {
-                    playerRef.sendMessage(Message.raw("[CivGuild]: Guild disbanded"));
-                }
+                guildManager.disbandGuild(playerRef, guildDisband);
                 break;
 
-            case "join": // Request to join a guild - Player & guild's name //TODO implement the invites
+            case "join": // Request to join a guild
                 if (args.length != 3) { //ensure args match this subcommand
                     playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg join <Guild_Name>"));
                     return;
                 }
-                guildManager.joinGuild(playerRef, args[2].replace("_", " ")); //TODO error response
-                break;
-
-            case "accept": // Accept a request to join current guild - Player & requester's name //TODO implement the invites
-                if (args.length != 2) { //ensure args match this subcommand
-                    playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg accept"));
+                Guild guildJoin = lookupGuild(args[2]);
+                if (guildJoin == null) {
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Unknown guild"));
                     return;
                 }
-                guildManager.acceptJoin(playerRef); //TODO error response
+                guildManager.joinRequest(playerRef, guildJoin);
                 break;
 
-            case "reject": // Reject a request to join current guild - Player & requester's name //TODO implement the invites
+            case "leave": // Removes caller from their own guild
                 if (args.length != 2) { //ensure args match this subcommand
-                    playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg reject"));
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg leave"));
                     return;
                 }
-                guildManager.rejectJoin(playerRef); //TODO error response
-                break;
+                guildManager.removeMember(playerRef, playerRef, "Self removal from guild");
+                return;
 
-            case "kick": // Remove a player from the current guild - Player & removing player's name
+            case "accept": // Accept a request to join current guild
                 if (args.length != 3) { //ensure args match this subcommand
-                    playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg kick <PlayerName>"));
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg accept <Player_Name>"));
                     return;
                 }
-                guildManager.kick(playerRef, args[2]); //TODO error response
+                PlayerRef joiningPlayer = Universe.get().getPlayerByUsername(args[2], NameMatching.EXACT);
+                if (joiningPlayer == null) {
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Unknown player name"));
+                    return;
+                }
+                guildManager.acceptJoin(playerRef, joiningPlayer);
                 break;
 
-            case "assign": //Assign a rank to a player - Player, player's name, GuildRank
+            case "reject": // Reject a request to join current guild
+                if (args.length != 3) { //ensure args match this subcommand
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg reject <Player_Name>"));
+                    return;
+                }
+                PlayerRef jPlayer = Universe.get().getPlayerByUsername(args[2], NameMatching.EXACT);
+                if (jPlayer == null) {
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Unknown player name"));
+                    return;
+                }
+                guildManager.acceptJoin(playerRef, jPlayer);
+                break;
+
+            case "add": //Add player to a guild
+                if (args.length != 4) { //ensure args match this subcommand
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg add <Guild_Name> <Player_Name>"));
+                    return;
+                }
+                Guild aGuild = lookupGuild(args[2]);
+                if (aGuild == null) {
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Unknown guild"));
+                    return;
+                }
+                PlayerRef aPlayer = Universe.get().getPlayerByUsername(args[3], NameMatching.EXACT);
+                if (aPlayer == null) {
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Unknown player name"));
+                    return;
+                }
+                guildManager.addMember(playerRef, aGuild, aPlayer);
+                break;
+
+            case "remove": // Remove a player from a guild (aka 'kick' as it will be named in the UI)
+                if (args.length != 4) { //ensure args match this subcommand
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg remove <Player_Name> <kick_reason>"));
+                    return;
+                }
+                PlayerRef rPlayer = Universe.get().getPlayerByUsername(args[2], NameMatching.EXACT);
+                if (rPlayer == null) {
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Unknown player name"));
+                    return;
+                }
+                guildManager.removeMember(playerRef, rPlayer, args[3].replace("_", " ")); //again passing in a string with _ instead of spaces
+                break;
+
+            case "assign": //Assign a rank to a player
                 if (args.length != 4) { //ensure args match this subcommand
                     playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg assign <PlayerName> [member/coleader/leader]"));
+                    return;
+                }
+                PlayerRef asPlayer = Universe.get().getPlayerByUsername(args[2], NameMatching.EXACT);
+                if (asPlayer == null) {
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Unknown player name"));
                     return;
                 }
                 GuildRank rank = GuildRank.stringToRank(args[3]);
@@ -172,27 +219,39 @@ public class CivGuildCommand extends AbstractPlayerCommand {
                     playerRef.sendMessage(Message.raw("[CivGuild]: Invalid rank"));
                     return;
                 }
-                guildManager.assignRank(playerRef, args[2], rank); //TODO error response
+                guildManager.assignRank(playerRef, asPlayer, rank);
                 break;
 
-            case "rename": //rename the current guild - Player & new name
-                if (args.length != 3) { //ensure args match this subcommand
-                    playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg rename <Guild_Name>"));
+            case "rename": //rename a guild
+                if (args.length != 4) { //ensure args match this subcommand
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg rename <Guild_Name> <New_Name>"));
                     return;
                 }
-                guildManager.renameGuild(playerRef, args[2].replace("_", " ")); //TODO error response
+                Guild rGuild = lookupGuild(args[2]);
+                if (rGuild == null) {
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Unknown guild"));
+                    return;
+                }
+                guildManager.renameGuild(playerRef, rGuild, args[3].replace("_", " "));  //Passing in a name rather than a guild object so process the spaces here
                 break;
 
-            case "setspawn": //setspawn of the current guild - Player
-                if (args.length != 2) { //ensure args match this subcommand
-                    playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg setspawn"));
+            case "setspawn": //set default spawn point of a guild
+                if (args.length != 6) { //ensure args match this subcommand
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Invalid arguments, try /cg setspawn <Guild_Name> <x> <y> <z>"));
                     return;
                 }
-                guildManager.setSpawn(playerRef); //TODO error response
+                Guild sGuild = lookupGuild(args[2]);
+                if (sGuild == null) {
+                    playerRef.sendMessage(Message.raw("[CivGuild]: Unknown guild"));
+                    return;
+                }
+                Vector3d spawnCoords = new Vector3d(Float.parseFloat(args[3]), Float.parseFloat(args[4]), Float.parseFloat(args[5]));
+                guildManager.setSpawn(playerRef, sGuild, spawnCoords);
                 break;
 
             default:
                 playerRef.sendMessage(Message.raw("[CivGuild]: Invalid command, try /cg help"));
+                break;
         }
     }
 
@@ -201,17 +260,25 @@ public class CivGuildCommand extends AbstractPlayerCommand {
         playerRef.sendMessage(Message.raw("[CivGuild]: Please see below command line options, some are subject to guild status or rank permissions" +
                 "\n - /cg help" +
                 "\n - /cg ui" +
-                "\n - /cg info <Guild_Name>" +
-                "\n - /cg list_guilds>" +
+                "\n - /cg info <Guild_Name>" + //replacing spaces with _ plays nice with the arg system, TODO something to polish in the future
+                "\n - /cg list_guilds" +
                 "\n - /cg list_members <Guild_Name>" +
-                "\n - /cg create <Guild_Name>" +
-                "\n - /cg disband" +
+                "\n - /cg create <Guild_Name> <Leader_Name>" +
+                "\n - /cg disband <Guild_Name>" +
                 "\n - /cg join <Guild_Name>" +
-                "\n - /cg [accept/reject]" +
-                "\n - /cg kick <PlayerName>" +
+                "\n - /cg leave" +
+                "\n - /cg [accept/reject] <Player_Name>" +
+                "\n - /cg add <Guild_Name> <Player_Name>" +
+                "\n - /cg remove <PlayerName> <kick_reason>" +
                 "\n - /cg assign <PlayerName> [member/coleader/leader]" +
-                "\n - /cg rename <Guild_Name>" +
-                "\n - /cg setspawn"));
+                "\n - /cg rename <Guild_Name> <New_Name>" +
+                "\n - /cg setspawn <Guild_Name> <x> <y> <z>"));
+    }
+
+    private Guild lookupGuild(String guildName) {
+        UUID uuid = GuildManager.getInstance().getGuildUUID(guildName.replace("_", " "));
+        if (uuid == null) { return null; }
+        return GuildManager.getInstance().getGuild(uuid);
     }
 
 }

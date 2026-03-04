@@ -32,4 +32,5 @@ public class GuildMember {
     public void setRank(GuildRank rank) { this.rank = rank; }
 
     public UUID getPlayerUuid() { return uuid; }
+
 }
