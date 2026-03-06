@@ -49,4 +49,7 @@ public enum GuildRank {
     public boolean canSetSpawn() {
         return this.permissionLevel >= 2;
     }
+    public boolean canManageJoinRequests() {
+        return this.permissionLevel >= 2;
+    }
 }

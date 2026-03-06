@@ -75,12 +75,36 @@ public class Guild {
         return Objects.requireNonNullElseGet(guildSpawn, () -> new Vector3d(0, 0, 0));
     }
 
+    //Sends message to all members
     public void notifyMembers(String message) {
         for (UUID uuid : members.keySet()) {
-            PlayerRef playerRef = Universe.get().getPlayer(uuid);
-            assert playerRef != null;
-            playerRef.sendMessage(Message.raw(message));
+            memberMessage(uuid, message);
         }
+    }
+
+
+    //Sends join request to members with permission
+    public void notifyJoinRequest(PlayerRef playerRef) {
+        for (GuildMember member : members.values()) {
+            if (member.getRank().canManageJoinRequests()) {
+                memberMessage(member.getPlayerUuid(), playerRef.getUsername() + " has requested to join");
+            }
+        }
+    }
+    //Sends cancelled join request to members with permission
+    public void notifyCancelledJoinRequest(PlayerRef playerRef) {
+        for (GuildMember member : members.values()) {
+            if (member.getRank().canManageJoinRequests()) {
+                memberMessage(member.getPlayerUuid(), playerRef.getUsername() + " has cancelled their join request");
+            }
+        }
+    }
+
+    //Messages the given uuid with a guild-formatted message
+    public void memberMessage(UUID uuid, String message) {
+        PlayerRef playerRef = Universe.get().getPlayer(uuid);
+        assert playerRef != null;
+        playerRef.sendMessage(Message.raw("[" + name + "] " + message)); //TODO guild colour
     }
 
     @Override

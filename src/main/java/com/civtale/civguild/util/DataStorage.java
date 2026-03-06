@@ -119,8 +119,8 @@ public class DataStorage {
                         players.put(playerUuid, guildUuid);
                     }
                 }
+                logger.at(Level.INFO).log("Data loaded successfully");
             }
-            logger.at(Level.INFO).log("Data loaded successfully");
 
         } catch (Exception e) {
             logger.at(Level.SEVERE).log("Could not load data");

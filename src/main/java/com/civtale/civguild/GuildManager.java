@@ -19,6 +19,7 @@ public class GuildManager {
     private static HytaleLogger logger;
     private static final Map<UUID, Guild> guilds = new HashMap<>(); //Map of all guilds
     private static final Map<UUID, UUID> players = new HashMap<>(); //Map of player UUID against guild UUID
+    private static final Map<UUID, UUID> invites = new HashMap<>(); //Map of pending invites player UUID against guild UUID
     
     private GuildManager() {}
     
@@ -33,7 +34,9 @@ public class GuildManager {
     }
     
     public static GuildManager getInstance() {
-        //TODO throw exception if not instanced yet
+        if (instance == null) {
+            logger.at(Level.SEVERE).log("GuildManager was not instanced before getting called");
+        }
         return instance;
     }
 
@@ -54,12 +57,7 @@ public class GuildManager {
     public Collection<Guild> getGuilds() { return guilds.values(); }
 
 
-    //TODO below are all placeholders, need to determine exaclt what they do, what params the need
-    //TODO currently doing bool outputs for command errors, may need to use error codes for more info (could do an advanced enum errors so they can be printed & translated)
-
-    //Below funcs require a caller playerRef to who called it, Any output is given back to this player
-    //The playerRef isn't used for anything else, since it can be called by someone in a different guild (admins), the guild being managed must be passed in as well
-    //Funcs must check that players perms to whether or not they have perms, or if they're OP
+    //Below guild logic methods require a caller playerRef, Any output is given back to this player and the affected player if a different player
 
     //Creates a new guild when given a name and a leader
     public void createGuild(PlayerRef callerRef, String guildName, PlayerRef leaderRef) {
@@ -90,7 +88,7 @@ public class GuildManager {
         //Save changes //TODO a better way than rewriting entire files? May need individual files for each player/guild or access only a specific GuildObj
         DataStorage.getInstance().saveData(guilds, players);
         //Announce & Log
-        if (callerRef != leaderRef) { leaderRef.sendMessage(Message.raw("[CivGuild] " + guild.getName() + " created successfully with you as the leader")); }
+        if (callerRef != leaderRef) { guild.memberMessage(leaderRef.getUuid(), "Created successfully with you as the leader"); }
         callerRef.sendMessage(Message.raw("[CivGuild] " + guild.getName() + " created successfully with " + leaderRef.getUsername() + " as the leader"));
         logger.at(Level.INFO).log(guild.getName() + " created successfully with " + leaderRef.getUsername() + " as the leader");
     }
@@ -104,18 +102,12 @@ public class GuildManager {
             return;
         }
         //All OK - Disband guild
-        String guildName = guild.getName();
-        for (UUID playerUuid : players.keySet()) { //run through player list and remove all against the guild UUID
-            if (players.get(playerUuid) == guild.getUuid()) { //TODO run through guild members instead to find uuid's?
-                players.remove(playerUuid);
-                //TODO update player nametags
-                PlayerRef playerRef = Universe.get().getPlayer(playerUuid);
-                if (callerRef != playerRef) { //Notify all players except the caller
-                    assert playerRef != null;
-                    playerRef.sendMessage(Message.raw("[CivGuild] " + guildName + " has been disbanded"));
-                }
-            }
+        for (GuildMember member : guild.getMembers()) { //run through members and remove all
+            players.remove(member.getPlayerUuid());
+            //TODO update player nametags
         }
+        String guildName = guild.getName();
+        guild.notifyMembers("Has been disbanded");
         guilds.remove(guild.getUuid()); //remove guild object and with it all the members
         //Save changes
         DataStorage.getInstance().saveData(guilds, players);
@@ -138,19 +130,20 @@ public class GuildManager {
             return;
         }
         //All OK - Add player
+        guild.notifyMembers(playerRef.getUsername() + " has joined the guild"); // before adding so the joining player doesn't get the message
+        invites.remove(playerRef.getUuid()); //removes the player's pending invite if it exists
         guild.addMember(playerRef);
         players.put(playerRef.getUuid(), guild.getUuid());
         //Save changes
         DataStorage.getInstance().saveData(guilds, players);
         //Announce & Log
-        if (callerRef != playerRef) { playerRef.sendMessage(Message.raw("[CivGuild] You are now a member of " + guild.getName()));}
+        if (callerRef != playerRef) { guild.memberMessage(playerRef.getUuid(), "Welcome, you are now a member");}
             callerRef.sendMessage(Message.raw("[CivGuild] " + playerRef.getUsername() + " is now a member of " + guild.getName()));
         logger.at(Level.INFO).log(playerRef.getUsername() + " is now a member of " + guild.getName());
     }
 
     //Removes the given player from their current guild
     public void removeMember(PlayerRef callerRef, PlayerRef memberRef, String kickReason) {
-        //TODO lookup player, check rank perms, kick reason, save
         //Check Member (only performing this before the perms since the guild is unknown and may be null)
         Guild guild = guilds.get(players.get(memberRef.getUuid())); //lookup guild from the member's UUID
         if (guild == null) {
@@ -217,7 +210,7 @@ public class GuildManager {
         //Save Changes
         DataStorage.getInstance().saveData(guilds, players);
         //Announce & Log
-        if (callerRef != memberRef) { memberRef.sendMessage(Message.raw("[CivGuild] you have been assign rank " + rank.getDisplayName())); }
+        if (callerRef != memberRef) { guild.memberMessage(memberRef.getUuid(), "You have been assign rank " + rank.getDisplayName()); }
         callerRef.sendMessage(Message.raw("[CivGuild] " + memberRef.getUsername() + " has been assigned rank " + rank.getDisplayName()));
         logger.at(Level.INFO).log(memberRef + " has been assigned rank " + rank.getDisplayName());
     }
@@ -247,7 +240,7 @@ public class GuildManager {
         //Save changes
         DataStorage.getInstance().saveData(guilds, players);
         //Announce & Log
-        guild.notifyMembers("[CivGuild] Guild " + oldName + " has been renamed to " + guild.getName());
+        guild.notifyMembers("Guild " + oldName + " has been renamed to " + guild.getName());
         logger.at(Level.INFO).log("Guild" + oldName + " has been renamed to " + guild.getName());
     }
 
@@ -266,23 +259,76 @@ public class GuildManager {
         //Save changes
         DataStorage.getInstance().saveData(guilds, players);
         //Announce & Log
-        guild.notifyMembers("[CivGuild] " + guild.getName() + " spawn has been set to (" + coords.x + ", " + coords.y + ", " + coords.z + ")"); //TODO round these values?
+        guild.notifyMembers("Default guild spawnpoint has been set to (" + coords.x + ", " + coords.y + ", " + coords.z + ")"); //TODO round these values?
         logger.at(Level.INFO).log(guild.getName() + " spawn has been set to (" + coords.x + ", " + coords.y + ", " + coords.z + ")");
     }
 
 
-    //TODO Invite system - these aren't as strict as above, they are called by the player using them
+    //Invite System Methods, the caller is the player being affected
     //Sends request from caller to the given guild
     public void joinRequest(PlayerRef callerRef, Guild guild) {
-        //TODO implement invite system - caller can override the invite and add a player directly?
+        UUID callerUuid = callerRef.getUuid();
+        //Check Caller
+        if (players.containsKey(callerUuid)) { //can't join if already in a guild
+            callerRef.sendMessage(Message.raw("[CivGuild] Cannot join guild: Already in a guild, leave it to join another guild"));
+            return;
+        }
+        if (invites.containsKey(callerUuid)) { //player already has a pending invite
+            if (invites.get(callerUuid) == guild.getUuid()) { //already sent a request to this guild
+                callerRef.sendMessage(Message.raw("[CivGuild] Join request already sent"));
+                return;
+            } else { //otherwise the pending request is for a different guild, so cancel it before continuing
+                cancelRequest(callerRef);
+            }
+        }
+        //Send Invite
+        invites.put(callerUuid, guild.getUuid());
+        guild.notifyJoinRequest(callerRef);
+        callerRef.sendMessage(Message.raw("[CivGuild] Request to join " + guild.getName() + " sent"));
+    }
+    //Cancels the current request for the given player
+    public void cancelRequest(PlayerRef callerRef) {
+        UUID callerUuid = callerRef.getUuid();
+        if (!invites.containsKey(callerUuid)) {
+            callerRef.sendMessage(Message.raw("[CivGuild] No pending join request found"));
+            return;
+        }
+        Guild guild = guilds.get(invites.get(callerUuid));
+        invites.remove(callerUuid);
+        guild.notifyCancelledJoinRequest(callerRef);
+        callerRef.sendMessage(Message.raw("[CivGuild] Join request for " + guild.getName() + " cancelled"));
     }
     //Accepts the request for the given player
     public void acceptJoin(PlayerRef callerRef, PlayerRef joiningPlayerRef) {
-        //TODO implement invite system, check rank perms
+        //Check invite
+        UUID joiningPlayerUuid = joiningPlayerRef.getUuid();
+        if (!invites.containsKey(joiningPlayerUuid)) {
+            callerRef.sendMessage(Message.raw("[CivGuild] This player hasn't requested to join a guild"));
+            return;
+        }
+        // Run add Member - this does perm checks, cancels the invite & notifies
+        Guild guild = guilds.get(invites.get(joiningPlayerUuid));
+        addMember(callerRef, guild, joiningPlayerRef);
     }
     //Rejects the request for the given player
     public void rejectJoin(PlayerRef callerRef, PlayerRef joiningPlayerRef) {
-        //TODO implement invite system, check rank perms
+        //Check invite
+        UUID joiningPlayerUuid = joiningPlayerRef.getUuid();
+        if (!invites.containsKey(joiningPlayerUuid)) {
+            callerRef.sendMessage(Message.raw("[CivGuild] This player hasn't requested to join a guild"));
+            return;
+        }
+        //Check caller
+        Guild guild = guilds.get(invites.get(joiningPlayerUuid));
+        PermChecker permChecker = new PermChecker(callerRef, guild);
+        if (!(permChecker.isOP() || (permChecker.isInGuild() && permChecker.getRank().canManageJoinRequests()))){ //caller is OP OR (in this guild AND has join-request permission)
+            callerRef.sendMessage(Message.raw("[CivGuild] You don't have permission for this command"));
+            return;
+        }
+        //Remove invite & notify
+        invites.remove(joiningPlayerUuid);
+        joiningPlayerRef.sendMessage(Message.raw("[CivGuild] Join request for " + guild.getName() + " was rejected"));
+        guild.memberMessage(callerRef.getUuid(), joiningPlayerRef.getUsername() + "'s join request rejected");
     }
 
 
