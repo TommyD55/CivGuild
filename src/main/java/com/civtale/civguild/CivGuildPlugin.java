@@ -3,9 +3,12 @@ package com.civtale.civguild;
 import com.civtale.civguild.commands.CivGuildCommand;
 import com.civtale.civguild.util.DataStorage;
 import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.server.core.permissions.PermissionsModule;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
 
 public class CivGuildPlugin extends JavaPlugin {
@@ -21,6 +24,8 @@ public class CivGuildPlugin extends JavaPlugin {
         super.setup();
 
         try { //wrapping everything in try-catch in case an exception occurs it can be tracked
+            //Command permission
+            PermissionsModule.get().addGroupPermission("Adventure", Set.of("civtale.user.civguild"));
 
             //Initialise plugin objects
             DataStorage.initialize(this.getDataDirectory(), LOGGER); //JavaPlugin knows of directory to use

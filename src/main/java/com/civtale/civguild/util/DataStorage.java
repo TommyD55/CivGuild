@@ -36,7 +36,6 @@ public class DataStorage {
 
     public static DataStorage getInstance() { return instance; }
 
-
     // saves data from the provided maps
     public void saveData(Map<UUID, Guild> guilds, Map<UUID, UUID> players) {
         try {

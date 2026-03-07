@@ -12,6 +12,7 @@ import com.hypixel.hytale.server.core.NameMatching;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayerCommand;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.permissions.HytalePermissions;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.World;
@@ -26,6 +27,7 @@ public class CivGuildCommand extends AbstractPlayerCommand {
     public CivGuildCommand() {
         super("cg", "CivGuild base command", false); //command name & description, doesn't require confirmation
         this.setAllowsExtraArguments(true); //further args /cg ...
+        requirePermission("civtale.user.civguild");
     }
 
     @Override
@@ -35,6 +37,7 @@ public class CivGuildCommand extends AbstractPlayerCommand {
         //Sift out invalid input
         if (args.length < 2) {
             helpMessage(playerRef);
+            return;
         }
         GuildManager guildManager = GuildManager.getInstance(); //access to guild manager
 
