@@ -1,8 +1,11 @@
 package com.civtale.civguild.commands;
 
 import com.civtale.civguild.Guild;
+import com.civtale.civguild.GuildManager;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
+import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
+import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractAsyncCommand;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractCommandCollection;
 import com.hypixel.hytale.server.core.universe.Universe;
@@ -19,58 +22,72 @@ public class InfoCommand extends AbstractCommandCollection {
         addSubCommand(new DisplayCommand());
         addSubCommand(new ListGuildsCommand());
         addSubCommand(new ListMembersCommand());
+        addAliases("i");
     }
 
-    public class DisplayCommand extends AbstractAsyncCommand {
+    public static class DisplayCommand extends AbstractAsyncCommand {
+        private final RequiredArg<String> guildArg;
+
         public DisplayCommand() {
             super("display", "Display guild information");
+            this.guildArg = this.withRequiredArg("guild", "Guild to display", ArgTypes.STRING);
+            addAliases("d");
         }
         @Override
         protected @NonNull CompletableFuture<Void> executeAsync(@NonNull CommandContext commandContext) {
-            Guild guildInfo = lookupGuild(args[2]);
-            if (guildInfo != null) { playerRef.sendMessage(Message.raw(guildInfo.toString()));
-            } else { playerRef.sendMessage(Message.raw("[CivGuild] Unknown guild"));}
-
-            return null;
+            GuildManager guildManager = GuildManager.getInstance();
+            Guild guild = guildManager.getGuildByName(guildArg.get(commandContext));
+            if (guild == null) {
+                commandContext.sendMessage(Message.raw("[CivGuild] Unknown guild"));
+                return CompletableFuture.completedFuture(null);
+            }
+            commandContext.sendMessage(Message.raw(guild.toString()));
+            return CompletableFuture.completedFuture(null);
         }
     }
-    public class ListGuildsCommand extends AbstractAsyncCommand {
+    public static class ListGuildsCommand extends AbstractAsyncCommand {
+
         public ListGuildsCommand() {
             super("listguilds", "List all guilds");
+            addAliases("g");
         }
         @Override
         protected @NonNull CompletableFuture<Void> executeAsync(@NonNull CommandContext commandContext) {
+            GuildManager guildManager = GuildManager.getInstance();
             if (guildManager.getGuilds().isEmpty()) {
-                playerRef.sendMessage(Message.raw("[CivGuild] No guilds exist"));
-                return;
+                commandContext.sendMessage(Message.raw("[CivGuild] No guilds exist"));
+                return CompletableFuture.completedFuture(null);
             }
-            playerRef.sendMessage(Message.raw("[CivGuild] Listing guilds..."));
+            commandContext.sendMessage(Message.raw("[CivGuild] Listing guilds..."));
             for (Guild guild : guildManager.getGuilds()){
-                playerRef.sendMessage(Message.raw(guild.getName()));
+                commandContext.sendMessage(Message.raw(guild.getName()));
             }
-
-            return null;
+            return CompletableFuture.completedFuture(null);
         }
     }
-    public class ListMembersCommand extends AbstractAsyncCommand {
+    public static class ListMembersCommand extends AbstractAsyncCommand {
+        private final RequiredArg<String> guildArg;
+
         public ListMembersCommand() {
             super("listmembers", "List members in a guild");
+            this.guildArg = this.withRequiredArg("guild", "Guild to lookup", ArgTypes.STRING);
+            addAliases("m");
         }
         @Override
         protected @NonNull CompletableFuture<Void> executeAsync(@NonNull CommandContext commandContext) {
-            Guild guild = lookupGuild(args[2]);
+            GuildManager guildManager = GuildManager.getInstance();
+            Guild guild = guildManager.getGuildByName(guildArg.get(commandContext));
             if (guild == null) {
-                playerRef.sendMessage(Message.raw("[CivGuild] Unknown guild"));
-                return;
+                commandContext.sendMessage(Message.raw("[CivGuild] Unknown guild"));
+                return CompletableFuture.completedFuture(null);
             }
-            playerRef.sendMessage(Message.raw("[CivGuild] Listing members..."));
+            commandContext.sendMessage(Message.raw("[CivGuild] Listing members..."));
             guild.getMembers().forEach((member) -> {
                 UUID playerUuid = member.getPlayerUuid();
                 String memberName = Objects.requireNonNull(Universe.get().getPlayer(playerUuid)).getUsername();
-                playerRef.sendMessage(Message.raw("[" + member.getRank().getDisplayName() + "] " + memberName)); //[RANK] Name
+                commandContext.sendMessage(Message.raw("[" + member.getRank().getDisplayName() + "] " + memberName)); //[RANK] Name
             });
-
-            return null;
+            return CompletableFuture.completedFuture(null);
         }
     }
 }

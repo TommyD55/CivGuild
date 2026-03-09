@@ -1,5 +1,6 @@
 package com.civtale.civguild.commands;
 
+import com.civtale.civguild.GuildManager;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
@@ -16,6 +17,6 @@ public class CancelCommand extends AbstractPlayerCommand {
 
     @Override
     protected void execute(@NonNull CommandContext commandContext, @NonNull Store<EntityStore> store, @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
-        guildManager.cancelRequest(playerRef);
+        GuildManager.getInstance().cancelRequest(playerRef);
     }
 }

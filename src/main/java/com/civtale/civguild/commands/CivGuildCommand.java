@@ -1,35 +1,12 @@
 package com.civtale.civguild.commands;
 
-import com.civtale.civguild.Guild;
-import com.civtale.civguild.GuildManager;
-import com.civtale.civguild.GuildRank;
-import com.civtale.civguild.pages.GuildUIPage;
-import com.hypixel.hytale.component.Ref;
-import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.protocol.Vector3d;
-import com.hypixel.hytale.server.core.Message;
-import com.hypixel.hytale.server.core.NameMatching;
-import com.hypixel.hytale.server.core.command.system.CommandContext;
-import com.hypixel.hytale.server.core.command.system.basecommands.AbstractAsyncCommand;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractCommandCollection;
-import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayerCommand;
-import com.hypixel.hytale.server.core.entity.entities.Player;
-import com.hypixel.hytale.server.core.permissions.HytalePermissions;
-import com.hypixel.hytale.server.core.universe.PlayerRef;
-import com.hypixel.hytale.server.core.universe.Universe;
-import com.hypixel.hytale.server.core.universe.world.World;
-import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import org.jspecify.annotations.NonNull;
-
-import java.util.Objects;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 public class CivGuildCommand extends AbstractCommandCollection {
 
     public CivGuildCommand() {
         super("cg", "CivGuild"); //command name & description, doesn't require confirmation
-        //Abstract Async commands to be run by anything ie the command line (TODO-change perms when UI implemented)
+        //Abstract Async commands to be run by anything ie the command line
         addSubCommand(new InfoCommand());
         addSubCommand(new CreateCommand());
         addSubCommand(new DisbandCommand());
@@ -45,8 +22,10 @@ public class CivGuildCommand extends AbstractCommandCollection {
         addSubCommand(new LeaveCommand());
         addSubCommand(new AcceptCommand());
         addSubCommand(new RejectCommand());
-
-        //requirePermission("civtale.user.civguild");
+        //Permission (available to all players)
+        requirePermission("civtale.user.civguild");
+        //Aliases can be typed instead of 'cg'
+        addAliases("civg", "civguild", "guild");
     }
 
 }
@@ -69,10 +48,4 @@ public class CivGuildCommand extends AbstractCommandCollection {
                 "\n - /cg assign <PlayerName> [member/coleader/leader]" +
                 "\n - /cg rename <Guild_Name> <New_Name>" +
                 "\n - /cg setspawn <Guild_Name> <x> <y> <z>"));
-    } */
-    /*//GuildManager guildManager = GuildManager.getInstance(); //access to guild manager
-    private Guild lookupGuild(String guildName) {
-        UUID uuid = GuildManager.getInstance().getGuildUUID(guildName.replace("_", " "));
-        if (uuid == null) { return null; }
-        return GuildManager.getInstance().getGuild(uuid);
     } */

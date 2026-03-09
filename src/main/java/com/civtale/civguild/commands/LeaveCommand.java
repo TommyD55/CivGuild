@@ -1,5 +1,6 @@
 package com.civtale.civguild.commands;
 
+import com.civtale.civguild.GuildManager;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
@@ -10,12 +11,13 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
 public class LeaveCommand extends AbstractPlayerCommand {
+
     public LeaveCommand() {
-        super("leave", "Leave your guild");
+        super("leave", "Leave your guild", true);
     }
 
     @Override
     protected void execute(@NonNull CommandContext commandContext, @NonNull Store<EntityStore> store, @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
-        guildManager.removeMember(playerRef, playerRef, "Self removal from guild");
+        GuildManager.getInstance().removeMember(commandContext, playerRef, "Self removal from guild");
     }
 }
