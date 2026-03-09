@@ -6,7 +6,7 @@ plugins {
 group = "com.civtale"
 version = "0.1.0"
 val javaVersion = 25
-
+ // PC TOGGLE
 repositories {
     mavenCentral()
     maven("https://maven.hytale-modding.info/releases") {
@@ -17,7 +17,7 @@ repositories {
 dependencies {
     compileOnly(libs.jetbrains.annotations)
     compileOnly(libs.jspecify)
-} /*///FOR LAPTOP TOGGLE THESE BEFORE & AFTER ???
+}  /*///FOR LAPTOP TOGGLE HERE
 repositories {
     mavenCentral()
     maven {
@@ -28,7 +28,9 @@ repositories {
 dependencies {
     // + here means the latest version, but you can hard-wire any known version!
     implementation("com.hypixel.hytale:Server:+")
-}*/
+    compileOnly(libs.jetbrains.annotations)
+    compileOnly(libs.jspecify)
+} *///END TOGGLE
 
 hytale {
     // uncomment if you want to add the Assets.zip file to your external libraries;

@@ -4,10 +4,8 @@ import com.civtale.civguild.util.DataStorage;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.protocol.Vector3d;
 import com.hypixel.hytale.server.core.Message;
-import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.permissions.PermissionsModule;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
-import com.hypixel.hytale.server.core.universe.Universe;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -41,7 +39,7 @@ public class GuildManager {
         return instance;
     }
 
-    //Returns a guild from it's name, or null if doesn't exist
+    //Returns a guild from name, or null if it doesn't exist
     public Guild getGuildByName(String guildName) {
         //stream of Guild objects -> if lowercase name matches guildName
         for (Guild guild : guilds.values()) {
@@ -52,17 +50,13 @@ public class GuildManager {
         return null;
     }
 
-    public Guild getGuild(UUID uuid) {
-        return guilds.get(uuid);
-    }
-
     public Collection<Guild> getGuilds() { return guilds.values(); }
 
 
     ///Below guild logic methods require a caller playerRef, Any output is given back to this player and the affected player if a different player
 
     //Creates a new guild when given a name and a leader
-    public void createGuild(CommandContext callerRef, String guildName, PlayerRef leaderRef) {
+    public void createGuild(PlayerRef callerRef, String guildName, PlayerRef leaderRef) {
         //Check caller
         if (!(PermissionsModule.get().getGroupsForUser(callerRef.getUuid()).contains("OP") || //If caller is OP they can run this
                 callerRef == leaderRef)){ //Or if the caller is the leader, ie they are creating their own guild
@@ -93,7 +87,7 @@ public class GuildManager {
     }
 
     //Disbands the given guild
-    public void disbandGuild(CommandContext callerRef, Guild guild) {
+    public void disbandGuild(PlayerRef callerRef, Guild guild) {
         //Check Caller
         PermChecker permChecker = new PermChecker(callerRef, guild);
         if (!(permChecker.isOP() || (permChecker.isInGuild() && permChecker.getRank().canDisband()))){ //caller is OP OR (in this guild AND has 'disband' permission)
@@ -116,7 +110,7 @@ public class GuildManager {
     }
 
     //Adds the given player to the given guild
-    public void addMember(CommandContext callerRef, Guild guild, PlayerRef playerRef) {
+    public void addMember(PlayerRef callerRef, Guild guild, PlayerRef playerRef) {
         //Check Caller
         PermChecker permChecker = new PermChecker(callerRef, guild);
         if (!(permChecker.isOP() || (permChecker.isInGuild() && permChecker.getRank().canAddMember()))){ //caller is OP OR (in this guild AND has add-member permission)
@@ -142,7 +136,7 @@ public class GuildManager {
     }
 
     //Removes the given player from their current guild
-    public void removeMember(CommandContext callerRef, PlayerRef memberRef, String kickReason) {
+    public void removeMember(PlayerRef callerRef, PlayerRef memberRef, String kickReason) {
         //Check Member (only performing this before the perms since the guild is unknown and may be null)
         Guild guild = guilds.get(players.get(memberRef.getUuid())); //lookup guild from the member's UUID
         if (guild == null) {
@@ -155,7 +149,7 @@ public class GuildManager {
             if (!(permChecker.isInGuild() && permChecker.getRank().canKickMember())) { //caller is in this guild AND has kick-member permission
                 callerRef.sendMessage(Message.raw("[CivGuild] You don't have permission for this command"));
                 return;
-            } else if (!permChecker.isRankedAbove(memberRef)) { //Ensure the caller is ranked above the member, ie co-leaders can't kick each other or the leader
+            } else if (permChecker.isRankedBelow(memberRef)) { //Ensure the caller is ranked above the member, ie co-leaders can't kick each other or the leader
                 callerRef.sendMessage(Message.raw("[CivGuild] Cannot remove member: Your rank isn't high enough"));
                 return;
             }
@@ -177,7 +171,7 @@ public class GuildManager {
     }
 
     //Assigns the given player the given rank
-    public void assignRank(CommandContext callerRef, PlayerRef memberRef, GuildRank rank) {
+    public void assignRank(PlayerRef callerRef, PlayerRef memberRef, GuildRank rank) {
         Guild guild = guilds.get(players.get(memberRef.getUuid()));
         //Check Caller
         PermChecker permChecker = new PermChecker(callerRef, guild);
@@ -185,7 +179,7 @@ public class GuildManager {
             if (!(permChecker.isInGuild() && permChecker.getRank().canAssignRank())) { //caller is in this guild AND has assign-rank permission
                 callerRef.sendMessage(Message.raw("[CivGuild] You don't have permission for this command"));
                 return;
-            } else if (!permChecker.isRankedAbove(memberRef)) { //Ensure the caller is ranked above the member, ie co-leaders can't assign each other or the leader
+            } else if (permChecker.isRankedBelow(memberRef)) { //Ensure the caller is ranked above the member, ie co-leaders can't assign each other or the leader
                 callerRef.sendMessage(Message.raw("[CivGuild] Cannot assign rank: Your own rank isn't high enough"));
                 return;
             }
@@ -215,7 +209,7 @@ public class GuildManager {
     }
 
     //Renames the given guild with the given name
-    public void renameGuild(CommandContext callerRef, Guild guild, String newName) {
+    public void renameGuild(PlayerRef callerRef, Guild guild, String newName) {
         //Check Caller
         PermChecker permChecker = new PermChecker(callerRef, guild);
         if (!(permChecker.isOP() || (permChecker.isInGuild() && permChecker.getRank().canRename()))){ //caller is OP OR (in this guild AND has 'Rename' permission)
@@ -241,7 +235,7 @@ public class GuildManager {
     }
 
     //Sets the spawn of the given guild to the given coords
-    public void setSpawn(CommandContext callerRef, Guild guild, Vector3d coords) {
+    public void setSpawn(PlayerRef callerRef, Guild guild, Vector3d coords) {
         //Check Caller
         PermChecker permChecker = new PermChecker(callerRef, guild);
         if (!(permChecker.isOP() || (permChecker.isInGuild() && permChecker.getRank().canSetSpawn()))){ //caller is OP OR (in this guild AND has setSpawn permission)
@@ -346,8 +340,8 @@ public class GuildManager {
             return players.get(callerUuid) == guild.getUuid();
         }
 
-        public boolean isRankedAbove(PlayerRef memberRef) { //caller is ranked above the given member //NOTE both must be in same guild
-            return guild.getMember(callerUuid).getRank().getPermissionLevel() > guild.getMember(memberRef.getUuid()).getRank().getPermissionLevel();
+        public boolean isRankedBelow(PlayerRef memberRef) { //caller is ranked above the given member //NOTE both must be in same guild
+            return guild.getMember(callerUuid).getRank().getPermissionLevel() <= guild.getMember(memberRef.getUuid()).getRank().getPermissionLevel();
         }
     }
     //Checks if a string is a valid guild name & returns a message if not

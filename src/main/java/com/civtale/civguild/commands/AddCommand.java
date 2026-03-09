@@ -2,19 +2,20 @@ package com.civtale.civguild.commands;
 
 import com.civtale.civguild.Guild;
 import com.civtale.civguild.GuildManager;
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.Message;
-import com.hypixel.hytale.server.core.NameMatching;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
-import com.hypixel.hytale.server.core.command.system.basecommands.AbstractAsyncCommand;
+import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayerCommand;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
-import com.hypixel.hytale.server.core.universe.Universe;
+import com.hypixel.hytale.server.core.universe.world.World;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
-import java.util.concurrent.CompletableFuture;
 
-public class AddCommand extends AbstractAsyncCommand {
+public class AddCommand extends AbstractPlayerCommand {
     private final RequiredArg<PlayerRef> playerArg;
     private final RequiredArg<String> guildArg;
 
@@ -26,15 +27,14 @@ public class AddCommand extends AbstractAsyncCommand {
     }
 
     @Override
-    protected @NonNull CompletableFuture<Void> executeAsync(@NonNull CommandContext commandContext) {
+    protected void execute(@NonNull CommandContext commandContext, @NonNull Store<EntityStore> store, @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
         GuildManager guildManager = GuildManager.getInstance();
         Guild guild = guildManager.getGuildByName(guildArg.get(commandContext));
         if (guild == null) {
-            commandContext.sendMessage(Message.raw("[CivGuild] Unknown guild"));
-            return CompletableFuture.completedFuture(null);
+            playerRef.sendMessage(Message.raw("[CivGuild] Unknown guild"));
+            return;
         }
-        guildManager.addMember(commandContext, guild, playerArg.get(commandContext));
+        guildManager.addMember(playerRef, guild, playerArg.get(commandContext));
 
-        return CompletableFuture.completedFuture(null);
     }
 }

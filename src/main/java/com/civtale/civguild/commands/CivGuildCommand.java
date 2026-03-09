@@ -6,7 +6,7 @@ public class CivGuildCommand extends AbstractCommandCollection {
 
     public CivGuildCommand() {
         super("cg", "CivGuild"); //command name & description, doesn't require confirmation
-        //Abstract Async commands to be run by anything ie the command line
+        //Commands which can be run by any player, ie OP (NOTE rank perms are tied to PlayerRef objects so can't use CLI)
         addSubCommand(new InfoCommand());
         addSubCommand(new CreateCommand());
         addSubCommand(new DisbandCommand());
@@ -15,7 +15,7 @@ public class CivGuildCommand extends AbstractCommandCollection {
         addSubCommand(new RankCommand());
         addSubCommand(new RenameCommand());
         addSubCommand(new SetspawnCommand());
-        //Abstract Player commands to target the caller player
+        //Commands to target the caller player
         addSubCommand(new UICommand());
         addSubCommand(new JoinCommand());
         addSubCommand(new CancelCommand());
