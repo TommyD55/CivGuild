@@ -13,6 +13,7 @@ import org.jspecify.annotations.NonNull;
 public class CancelCommand extends AbstractPlayerCommand {
     public CancelCommand() {
         super("cancel", "Cancel join request");
+        requirePermission("civtale.user.civguild");
     }
 
     @Override

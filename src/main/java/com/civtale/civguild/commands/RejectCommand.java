@@ -18,6 +18,7 @@ public class RejectCommand extends AbstractPlayerCommand {
     public RejectCommand() {
         super("reject", "Reject a join request");
         this.playerArg = this.withRequiredArg("player", "Player to reject", ArgTypes.PLAYER_REF);
+        requirePermission("civtale.user.civguild");
         addAliases("r");
     }
 

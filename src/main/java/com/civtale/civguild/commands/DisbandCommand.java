@@ -21,6 +21,7 @@ public class DisbandCommand extends AbstractPlayerCommand {
     public DisbandCommand() {
         super("disband", "Disband a guild", true);
         this.guildArg = this.withRequiredArg("guild", "Guild to disband", ArgTypes.STRING);
+        requirePermission("civtale.user.civguild");
     }
 
     @Override

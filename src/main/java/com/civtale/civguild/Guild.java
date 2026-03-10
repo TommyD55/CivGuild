@@ -4,7 +4,6 @@ import com.hypixel.hytale.protocol.Vector3d;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
-import com.hypixel.hytale.server.core.universe.world.World;
 
 import java.util.*;
 
@@ -59,7 +58,21 @@ public class Guild {
     }
 
     public void removeMember(UUID playerUuid) { //GuildManager ensures this isn't the leader
+        if (members.get(playerUuid).getRank() == GuildRank.LEADER) { //remove from leader set if this member is a leader
+            this.leaderUuids.remove(playerUuid);
+        }
         this.members.remove(playerUuid);
+    }
+
+    public void assignRank(UUID uuid, GuildRank rank) {
+        GuildMember member = this.members.get(uuid);
+        if (member.getRank() == GuildRank.LEADER && rank != GuildRank.LEADER) { //if a leader is being demoted, remove them from the leader set
+            this.leaderUuids.remove(uuid);
+        }
+        if (rank == GuildRank.LEADER) { //if member is being promoted to a leader, add them to the set
+            this.leaderUuids.add(uuid);
+        }
+        member.setRank(rank); //set their rank
     }
 
     public void setName(String name) {
@@ -82,20 +95,11 @@ public class Guild {
         }
     }
 
-
-    //Sends join request to members with permission
-    public void notifyJoinRequest(PlayerRef playerRef) {
+    //Sends notification to all members in & above the given rank
+    public void notifyMembersByRank(GuildRank rank, String message) {
         for (GuildMember member : members.values()) {
-            if (member.getRank().canManageJoinRequests()) {
-                memberMessage(member.getPlayerUuid(), playerRef.getUsername() + " has requested to join");
-            }
-        }
-    }
-    //Sends cancelled join request to members with permission
-    public void notifyCancelledJoinRequest(PlayerRef playerRef) {
-        for (GuildMember member : members.values()) {
-            if (member.getRank().canManageJoinRequests()) {
-                memberMessage(member.getPlayerUuid(), playerRef.getUsername() + " has cancelled their join request");
+            if (member.getRank().getPermissionLevel() >= rank.getPermissionLevel()) {
+                memberMessage(member.getPlayerUuid(), message);
             }
         }
     }
@@ -103,7 +107,9 @@ public class Guild {
     //Messages the given uuid with a guild-formatted message
     public void memberMessage(UUID uuid, String message) {
         PlayerRef playerRef = Universe.get().getPlayer(uuid);
-        assert playerRef != null;
+        if (playerRef == null) { //Means player is offline, skip this message
+            return;
+        }
         playerRef.sendMessage(Message.raw("[" + name + "] " + message)); //TODO guild colour
     }
 

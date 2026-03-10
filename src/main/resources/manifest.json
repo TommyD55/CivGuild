@@ -9,7 +9,7 @@
     }
   ],
   "Website": "${plugin_website}",
-  "ServerVersion": "${server_version}",
+  "ServerVersion": "*",
   "Dependencies": {},
   "OptionalDependencies": {},
   "DisabledByDefault": false,

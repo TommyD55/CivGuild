@@ -23,6 +23,7 @@ public class RenameCommand extends AbstractPlayerCommand {
         super("rename", "Rename a guild");
         this.guildArg = this.withRequiredArg("guild", "Guild to rename", ArgTypes.STRING);
         this.nameArg = this.withRequiredArg("name", "New guild name", ArgTypes.STRING);
+        requirePermission("civtale.user.civguild");
         addAliases("name");
     }
 

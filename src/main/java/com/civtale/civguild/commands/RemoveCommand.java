@@ -21,6 +21,7 @@ public class RemoveCommand extends AbstractPlayerCommand {
         super("remove", "Remove a player from their guild");
         this.playerArg = this.withRequiredArg("player", "Player to remove", ArgTypes.PLAYER_REF);
         this.reasonArg = this.withRequiredArg("reason", "Reason for removal", ArgTypes.STRING);
+        requirePermission("civtale.user.civguild");
     }
 
     @Override

@@ -25,6 +25,7 @@ public class SetspawnCommand extends AbstractPlayerCommand {
         super("setspawn", "Sets a guild's default spawn location");
         this.guildArg = this.withRequiredArg("guild", "Guild to change spawn", ArgTypes.STRING);
         this.positionArg = this.withRequiredArg("coordinates", "New spawn position", ArgTypes.VECTOR3I); //NOTE only supports int vector
+        requirePermission("civtale.user.civguild");
         addAliases("spawn");
     }
 

@@ -18,6 +18,7 @@ public class AcceptCommand extends AbstractPlayerCommand {
     public AcceptCommand() {
         super("accept", "Accept a join request");
         this.playerArg = this.withRequiredArg("player", "Player to accept", ArgTypes.PLAYER_REF);
+        requirePermission("civtale.user.civguild");
         addAliases("a");
     }
 

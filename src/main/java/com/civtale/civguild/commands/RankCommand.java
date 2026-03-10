@@ -23,6 +23,7 @@ public class RankCommand extends AbstractPlayerCommand {
         super("rank", "Assign a rank to a guild member");
         this.playerArg = this.withRequiredArg("player", "Player to assign rank to", ArgTypes.PLAYER_REF);
         this.rankArg = this.withRequiredArg("rank", "Rank to assign", ArgTypes.STRING);
+        requirePermission("civtale.user.civguild");
         addAliases("assign");
     }
 

@@ -14,6 +14,7 @@ import org.jspecify.annotations.NonNull;
 public class UICommand extends AbstractPlayerCommand {
     public UICommand() {
         super("ui", "Open CivGuild User Interface");
+        requirePermission("civtale.user.civguild");
         addAliases("gui", "window", "interface", "user interface");
     }
 

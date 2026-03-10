@@ -22,6 +22,7 @@ public class InfoCommand extends AbstractCommandCollection {
         addSubCommand(new DisplayCommand());
         addSubCommand(new ListGuildsCommand());
         addSubCommand(new ListMembersCommand());
+        requirePermission("civtale.user.civguild");
         addAliases("i");
     }
 
@@ -31,6 +32,7 @@ public class InfoCommand extends AbstractCommandCollection {
         public DisplayCommand() {
             super("display", "Display guild information");
             this.guildArg = this.withRequiredArg("guild", "Guild to display", ArgTypes.STRING);
+            requirePermission("civtale.user.civguild");
             addAliases("d");
         }
         @Override
@@ -49,6 +51,7 @@ public class InfoCommand extends AbstractCommandCollection {
 
         public ListGuildsCommand() {
             super("listguilds", "List all guilds");
+            requirePermission("civtale.user.civguild");
             addAliases("g");
         }
         @Override
@@ -71,6 +74,7 @@ public class InfoCommand extends AbstractCommandCollection {
         public ListMembersCommand() {
             super("listmembers", "List members in a guild");
             this.guildArg = this.withRequiredArg("guild", "Guild to lookup", ArgTypes.STRING);
+            requirePermission("civtale.user.civguild");
             addAliases("m");
         }
         @Override
@@ -83,8 +87,7 @@ public class InfoCommand extends AbstractCommandCollection {
             }
             commandContext.sendMessage(Message.raw("[CivGuild] Listing members..."));
             guild.getMembers().forEach((member) -> {
-                UUID playerUuid = member.getPlayerUuid();
-                String memberName = Objects.requireNonNull(Universe.get().getPlayer(playerUuid)).getUsername();
+                String memberName = member.getUsername();
                 commandContext.sendMessage(Message.raw("[" + member.getRank().getDisplayName() + "] " + memberName)); //[RANK] Name
             });
             return CompletableFuture.completedFuture(null);

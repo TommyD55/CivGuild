@@ -26,6 +26,7 @@ public class CivGuildPlugin extends JavaPlugin {
         try { //wrapping everything in try-catch in case an exception occurs it can be tracked
             //Command permission
             PermissionsModule.get().addGroupPermission("Adventure", Set.of("civtale.user.civguild"));
+            PermissionsModule.get().addGroupPermission("Creative", Set.of("civtale.admin.civguild"));
 
             //Initialise plugin objects
             DataStorage.initialize(this.getDataDirectory(), LOGGER); //JavaPlugin knows of directory to use

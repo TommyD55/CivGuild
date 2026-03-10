@@ -14,6 +14,7 @@ public class LeaveCommand extends AbstractPlayerCommand {
 
     public LeaveCommand() {
         super("leave", "Leave your guild", true);
+        requirePermission("civtale.user.civguild");
     }
 
     @Override

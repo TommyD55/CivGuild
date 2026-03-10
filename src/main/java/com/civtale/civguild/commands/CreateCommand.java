@@ -20,7 +20,8 @@ public class CreateCommand extends AbstractPlayerCommand {
     public CreateCommand() {
         super("create", "Create a new guild");
         this.guildArg = this.withRequiredArg("guild_name", "Name of new guild", ArgTypes.STRING);
-        this.playerArg = this.withRequiredArg("player", "Player to assign as the leader", ArgTypes.PLAYER_REF);
+        this.playerArg = this.withRequiredArg("leader", "Player to assign as the leader", ArgTypes.PLAYER_REF);
+        requirePermission("civtale.user.civguild");
     }
 
     @Override

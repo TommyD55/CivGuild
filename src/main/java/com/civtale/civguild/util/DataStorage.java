@@ -5,13 +5,8 @@ import com.civtale.civguild.GuildMember;
 import com.civtale.civguild.GuildRank;
 import com.google.gson.*;
 import com.hypixel.hytale.logger.HytaleLogger;
-import com.hypixel.hytale.logger.util.LoggerPrintStream;
-import com.hypixel.hytale.server.core.entity.entities.Player;
-
 import java.io.*;
-import java.lang.reflect.Member;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,7 +32,7 @@ public class DataStorage {
     public static DataStorage getInstance() { return instance; }
 
     // saves data from the provided maps
-    public void saveData(Map<UUID, Guild> guilds, Map<UUID, UUID> players) {
+    public void saveData(Map<UUID, Guild> guilds) { //NOTE the 'players' Map in GM isn't required to save as all it's info is inside the guild Map
         try {
             Files.createDirectories(dataDirectory.getParent());
             JsonObject root = new JsonObject();
@@ -45,22 +40,23 @@ public class DataStorage {
 
             //Guild Data
             for (Guild guild : guilds.values()) { //run through each guild
-                JsonObject guildObj = new JsonObject(); //create a json element and add the guild's data to it
+                JsonObject guildObj = new JsonObject(); //create a JSON element and add the guild's data to it
                 guildObj.addProperty("name", guild.getName());
                 guildObj.addProperty("guildUuid", guild.getUuid().toString());
                 //TODO add any other guild variables
 
                 //Member Data
                 JsonArray membersArray = new JsonArray(); //run through each member
-                for (GuildMember member : guild.getMembers()) { //build a json element and add the member's data to it
+                for (GuildMember member : guild.getMembers()) { //build a JSON element and add the member's data to it
                     JsonObject memberObj = new JsonObject();
                     memberObj.addProperty("playerUuid", member.getPlayerUuid().toString());
                     memberObj.addProperty("rank", member.getRank().toString()); //NOTE toString used since loadData() uses valueOf()
+                    memberObj.addProperty("username", member.getUsername());
                     //TODO add any other member variables
                     membersArray.add(memberObj);
                 }
 
-                //Add members to the guild, then the guild to the json array
+                //Add members to the guild, then the guild to the JSON array
                 guildObj.add("member", membersArray);
                 guildsArray.add(guildObj);
             }
@@ -82,15 +78,15 @@ public class DataStorage {
             logger.at(Level.WARNING).log("Guild data already loaded, DataStorage.loadData() should not be getting called");
             return;
         }
-        if (!Files.exists(dataDirectory, new LinkOption[0])) {
+        if (!Files.exists(dataDirectory)) {
             logger.at(Level.INFO).log("No data files found");
             return;
         }
         try (Reader reader = Files.newBufferedReader(dataDirectory)) { //setup json reader
-            JsonObject root = (JsonObject)gson.fromJson(reader, JsonObject.class);
+            JsonObject root = gson.fromJson(reader, JsonObject.class);
             if (root != null && root.has("guild")) { //guild data file exists
                 //Guild Data
-                for (JsonElement guildElement : root.getAsJsonArray("guild")) { //run through json elements in the guild data file
+                for (JsonElement guildElement : root.getAsJsonArray("guild")) { //run through JSON elements in the guild data file
                     JsonObject guildObj = guildElement.getAsJsonObject(); //json element to json object
 
                     String name = guildObj.get("name").getAsString(); //Guild name
@@ -99,15 +95,16 @@ public class DataStorage {
 
                     //Member Data
                     Map<UUID, GuildMember> members = new HashMap<>(); //temp for storing members
-                    for (JsonElement memberElement : guildObj.getAsJsonArray("member")) { //run through json sub-elements in the guild data file
+                    for (JsonElement memberElement : guildObj.getAsJsonArray("member")) { //run through JSON sub-elements in the guild data file
                         JsonObject memberObj = memberElement.getAsJsonObject(); //json element to json object
 
                         UUID playerUuid = UUID.fromString(memberObj.get("playerUuid").getAsString()); //Member UUID
                         GuildRank rank = GuildRank.valueOf(memberObj.get("rank").getAsString()); //Member rank
+                        String username = memberObj.get("username").getAsString(); //Member name
                         //TODO any other member variables
 
                         //Create Member object and save to member map
-                        GuildMember member = new GuildMember(playerUuid, rank);
+                        GuildMember member = new GuildMember(playerUuid, username, rank);
                         members.put(playerUuid, member);
                     }
                     //Create guild object & load in all above retrieved Data
