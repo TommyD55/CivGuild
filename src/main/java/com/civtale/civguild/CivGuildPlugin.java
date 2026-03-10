@@ -1,13 +1,19 @@
 package com.civtale.civguild;
 
 import com.civtale.civguild.commands.CivGuildCommand;
+import com.civtale.civguild.listeners.ChatListener;
+import com.civtale.civguild.listeners.PlayerJoinListener;
 import com.civtale.civguild.util.DataStorage;
+import com.hypixel.hytale.event.EventRegistry;
 import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.server.core.event.events.player.PlayerChatEvent;
+import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import com.hypixel.hytale.server.core.permissions.PermissionsModule;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 
@@ -34,6 +40,13 @@ public class CivGuildPlugin extends JavaPlugin {
 
             //Registers
             this.getCommandRegistry().registerCommand(new CivGuildCommand()); //CivGuild Command
+            this.getEventRegistry().registerGlobal(PlayerChatEvent.class, ChatListener::onPlayerChat); //Chat listener
+            PlayerJoinListener var10002 = new PlayerJoinListener(LOGGER); //Player join listener
+            EventRegistry var10000 = this.getEventRegistry();
+            Objects.requireNonNull(var10002);
+            var10000.registerGlobal(PlayerReadyEvent.class, var10002::onPlayerReady);
+
+            LOGGER.at(Level.INFO).log("Successfully setup");
 
         } catch (Exception e) {
             LOGGER.at(Level.SEVERE).log("Failed setup: ", e.getMessage());

@@ -69,6 +69,8 @@ public class Guild {
 
     public GuildMember getMember(UUID uuid) { return members.get(uuid); }
 
+    public boolean hasMember(UUID uuid) { return members.containsKey(uuid); }
+
     public Set<UUID> getLeaderUuids() {
         return leaderUuids;
     }

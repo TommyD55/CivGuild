@@ -49,6 +49,11 @@ public class GuildManager {
         return null;
     }
 
+    //Returns guild when given a member uuid
+    public Guild getGuildByMember(UUID member) {
+        return guilds.get(players.get(member));
+    }
+
     public Collection<Guild> getGuilds() { return guilds.values(); }
 
 
@@ -136,7 +141,7 @@ public class GuildManager {
     //Removes the given player from their current guild
     public void removeMember(PlayerRef callerRef, PlayerRef memberRef, String kickReason) {
         //Check Member (only performing this before the perms since the guild is unknown and may be null)
-        Guild guild = guilds.get(players.get(memberRef.getUuid())); //lookup guild from the member's UUID
+        Guild guild = getGuildByMember(memberRef.getUuid()); //lookup guild from the member's UUID
         if (guild == null) {
             callerRef.sendMessage(Message.raw("[CivGuild] This player is not in a guild"));
             return;
@@ -171,7 +176,7 @@ public class GuildManager {
 
     //Assigns the given player the given rank
     public void assignRank(PlayerRef callerRef, PlayerRef memberRef, GuildRank rank) {
-        Guild guild = guilds.get(players.get(memberRef.getUuid()));
+        Guild guild = getGuildByMember(memberRef.getUuid());
         //Check Caller
         PermChecker permChecker = new PermChecker(callerRef, guild);
         if (!permChecker.isOP()) { //caller is OP
@@ -346,7 +351,7 @@ public class GuildManager {
     //Returns current join requests for the caller's guild
     public Set<String> getInvitesByGuild(PlayerRef callerRef) {
         Set<String> guildRequests = new HashSet<>();
-        Guild guild = guilds.get(players.get(callerRef.getUuid()));
+        Guild guild = getGuildByMember(callerRef.getUuid());
         //Check Caller
         if (guild == null || !guild.getMember(callerRef.getUuid()).getRank().canManageJoinRequests()) {
             callerRef.sendMessage(Message.raw("[CivGuild] You don't have permission for this"));
