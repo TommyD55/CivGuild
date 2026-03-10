@@ -5,6 +5,9 @@ import com.civtale.civguild.GuildMember;
 import com.civtale.civguild.GuildRank;
 import com.google.gson.*;
 import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.protocol.Vector3d;
+
+import java.awt.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,8 +44,16 @@ public class DataStorage {
             //Guild Data
             for (Guild guild : guilds.values()) { //run through each guild
                 JsonObject guildObj = new JsonObject(); //create a JSON element and add the guild's data to it
-                guildObj.addProperty("name", guild.getName());
                 guildObj.addProperty("guildUuid", guild.getUuid().toString());
+                guildObj.addProperty("createdTimestamp", guild.getCreatedTimestamp());
+                guildObj.addProperty("name", guild.getName());
+                guildObj.addProperty("nameTimestamp", guild.getNameTimestamp());
+                guildObj.addProperty("colour", guild.getColour().toString());
+                guildObj.addProperty("colourTimestamp", guild.getColourTimestamp());
+                guildObj.addProperty("spx", guild.getSpawnpoint().x); //Hytale Vector3d can't decode from string so save as doubles
+                guildObj.addProperty("spy", guild.getSpawnpoint().y);
+                guildObj.addProperty("spz", guild.getSpawnpoint().z);
+                guildObj.addProperty("spawnTimestamp", guild.getSpawnTimestamp());
                 //TODO add any other guild variables
 
                 //Member Data
@@ -89,8 +100,14 @@ public class DataStorage {
                 for (JsonElement guildElement : root.getAsJsonArray("guild")) { //run through JSON elements in the guild data file
                     JsonObject guildObj = guildElement.getAsJsonObject(); //json element to json object
 
-                    String name = guildObj.get("name").getAsString(); //Guild name
                     UUID guildUuid = UUID.fromString(guildObj.get("guildUuid").getAsString()); //Guild UUID
+                    long createdTimestamp = guildObj.get("createdTimestamp").getAsLong();
+                    String name = guildObj.get("name").getAsString(); //Guild name
+                    long nameTimestamp = guildObj.get("nameTimestamp").getAsLong();
+                    Vector3d spawnpoint = new Vector3d(guildObj.get("spx").getAsDouble(), guildObj.get("spy").getAsDouble(), guildObj.get("spz").getAsDouble());
+                    long spawnTimestamp = guildObj.get("spawnTimestamp").getAsLong();
+                    Color colour = Color.decode(guildObj.get("colour").getAsString());
+                    long colorTimestamp = guildObj.get("colourTimestamp").getAsLong();
                     //TODO any other guild variables
 
                     //Member Data
@@ -108,7 +125,7 @@ public class DataStorage {
                         members.put(playerUuid, member);
                     }
                     //Create guild object & load in all above retrieved Data
-                    Guild guild = new Guild(name, guildUuid, members);
+                    Guild guild = new Guild(guildUuid, members, name, spawnpoint, colour, createdTimestamp, nameTimestamp,  spawnTimestamp, colorTimestamp);
                     //Finally add this guild & it's members to the Maps
                     guilds.put(guild.getUuid(), guild);
                     for (UUID playerUuid : members.keySet()) {

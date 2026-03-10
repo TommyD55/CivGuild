@@ -5,17 +5,26 @@ import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
 
+import java.awt.*;
+import java.time.Instant;
 import java.util.*;
 
 public class Guild {
-    private static final int MAX_MEMBERS = 100; //TODO configurable value
-    private String name; //guild name, can be changed
-    private Vector3d guildSpawn;
+    private static final long cooldown = 120; //TWO MINUTES in seconds
     private final UUID uuid; //final uuid never changes
     private final Map<UUID, GuildMember> members;
     private final Set<UUID> leaderUuids;
+    //Properties
+    private String name; //guild name, can be changed
+    private Vector3d spawnpoint;
+    private Color colour;
+    //Timestamps
+    private final long createdTimestamp;
+    private long nameTimestamp;
+    private long spawnTimestamp;
+    private long colourTimestamp;
 
-    //Cosnstructor for new guild
+    //Constructor for new guild
     public Guild(String name, PlayerRef leaderRef) {
         this.name = name;
         this.uuid = UUID.randomUUID(); //get a unique UUID for this guild
@@ -23,10 +32,16 @@ public class Guild {
         this.members.put(leaderRef.getUuid(), new GuildMember(leaderRef, GuildRank.LEADER)); //save the leader as the first member
         this.leaderUuids = new HashSet<>();
         this.leaderUuids.add(leaderRef.getUuid());
+        this.spawnpoint = new Vector3d(0, 0, 0);
+        this.colour = Color.GRAY;
+        this.createdTimestamp = Instant.now().getEpochSecond();
+        this.nameTimestamp = 0;
+        this.spawnTimestamp = 0;
+        this.colourTimestamp = 0;
     }
     //Constructor for guild from save
-    public Guild(String name, UUID uuid, Map<UUID, GuildMember> members) {
-        this.name = name;
+    public Guild(UUID uuid, Map<UUID, GuildMember> members, String name, Vector3d spawnpoint, Color colour,
+                 long createdTimestamp, long nameTimestamp, long spawnTimestamp, long colourTimestamp) {
         this.uuid = uuid; //get a unique UUID for this guild
         this.members = members;
         this.leaderUuids = new HashSet<>();
@@ -35,11 +50,16 @@ public class Guild {
                 this.leaderUuids.add(member.getPlayerUuid());
             }
         }
+        this.name = name;
+        this.spawnpoint = spawnpoint;
+        this.colour = colour;
+        this.createdTimestamp = createdTimestamp;
+        this.nameTimestamp = nameTimestamp;
+        this.spawnTimestamp = spawnTimestamp;
+        this.colourTimestamp = colourTimestamp;
     }
 
-    public String getName() {
-        return name;
-    }
+    ///
 
     public UUID getUuid() {
         return uuid;
@@ -75,19 +95,66 @@ public class Guild {
         member.setRank(rank); //set their rank
     }
 
-    public void setName(String name) {
-        this.name = name;
+    /// Property setters/getters
+    public String getName() {
+        return name;
     }
 
-    public void setSpawn(Vector3d guildSpawn) { //TODO implement this feature & save to file
-        this.guildSpawn = guildSpawn;
+    public long setName(String name) {
+        long delta = nameTimestamp - Instant.now().getEpochSecond() - cooldown;
+        if (delta < 0) {
+            this.name = name;
+            nameTimestamp = Instant.now().getEpochSecond();
+            return 0;
+        }
+        return delta;
     }
 
-    public Vector3d getSpawn() {
-        //TODO return world's spawn instead (how to get the world for this instance?)
-        return Objects.requireNonNullElseGet(guildSpawn, () -> new Vector3d(0, 0, 0));
+    public Vector3d getSpawnpoint() {
+        return this.spawnpoint;
     }
 
+    public long setSpawnpoint(Vector3d spawnpoint) {
+        long delta = spawnTimestamp - Instant.now().getEpochSecond() - cooldown;
+        if (delta < 0) {
+            this.spawnpoint = spawnpoint;
+            spawnTimestamp = Instant.now().getEpochSecond();
+            return 0;
+        }
+        return delta;
+    }
+
+    public Color getColour() {
+        return colour;
+    }
+
+    public long setColour(Color colour) {
+        long delta = colourTimestamp - Instant.now().getEpochSecond() - cooldown;
+        if (delta < 0) {
+            this.colour = colour;
+            colourTimestamp = Instant.now().getEpochSecond();
+            return 0;
+        }
+        return delta;
+    }
+
+    public long getCreatedTimestamp() {
+        return createdTimestamp;
+    }
+
+    public long getNameTimestamp() {
+        return nameTimestamp;
+    }
+
+    public long getSpawnTimestamp() {
+        return spawnTimestamp;
+    }
+
+    public long getColourTimestamp() {
+        return colourTimestamp;
+    }
+
+    /// Messaging
     //Sends message to all members
     public void notifyMembers(String message) {
         for (UUID uuid : members.keySet()) {
@@ -115,6 +182,6 @@ public class Guild {
 
     @Override
     public String toString() {
-        return "Guild Name: " + name + "\nUUID: " + uuid + "\nMember count: " + members.size();
+        return "Guild Name: " + name + "\nCreated at: " + Instant.ofEpochSecond(createdTimestamp).toString() + "\nUUID: " + uuid + "\nMember count: " + members.size();
     }
 }

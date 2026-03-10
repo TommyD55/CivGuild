@@ -5,7 +5,7 @@ import com.hypixel.hytale.server.core.command.system.basecommands.AbstractComman
 public class CivGuildCommand extends AbstractCommandCollection {
 
     public CivGuildCommand() {
-        super("cg", "CivGuild"); //command name & description, doesn't require confirmation
+        super("civguild", "CivGuild"); //command name & description, doesn't require confirmation
         //Commands which can be run by any player, ie OP (NOTE rank perms are tied to PlayerRef objects so can't use CLI)
         addSubCommand(new InfoCommand());
         addSubCommand(new CreateCommand());
@@ -26,7 +26,7 @@ public class CivGuildCommand extends AbstractCommandCollection {
         //Permission (available to all players)
         requirePermission("civtale.user.civguild");
         //Aliases can be typed instead of 'cg'
-        addAliases("civg", "civguild", "guild");
+        addAliases("civg", "cg");
     }
 
 }

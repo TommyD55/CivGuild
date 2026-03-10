@@ -6,17 +6,17 @@ plugins {
 group = "com.civtale"
 version = "0.1.0"
 val javaVersion = 25
- // PC TOGGLE
+// PC TOGGLE
 repositories {
-    mavenCentral()
-    maven("https://maven.hytale-modding.info/releases") {
-        name = "HytaleModdingReleases"
-    }
+   mavenCentral()
+   maven("https://maven.hytale-modding.info/releases") {
+       name = "HytaleModdingReleases"
+   }
 }
 
 dependencies {
-    compileOnly(libs.jetbrains.annotations)
-    compileOnly(libs.jspecify)
+   compileOnly(libs.jetbrains.annotations)
+   compileOnly(libs.jspecify)
 }  /*///FOR LAPTOP TOGGLE HERE
 repositories {
     mavenCentral()

@@ -7,6 +7,8 @@ import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.permissions.PermissionsModule;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 
+import java.awt.*;
+import java.time.Instant;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -214,17 +216,20 @@ public class GuildManager {
             callerRef.sendMessage(Message.raw("[CivGuild] You don't have permission for this"));
             return;
         }
-        //Check cooldown
-        //TODO check cooldown
         //Check new name
         String checkMessage = guildNameCheck(newName);
         if (checkMessage != null) {
-            callerRef.sendMessage(Message.raw("[CivGuild] Cannot create guild: " + checkMessage));
+            callerRef.sendMessage(Message.raw("[CivGuild] Cannot rename guild: " + checkMessage));
             return;
         }
-        //All OK - rename
+        //All OK - rename if cooldown permits
         String oldName = guild.getName();
-        guild.setName(newName);
+        long cooldown = guild.setName(newName);
+        if (cooldown > 0) { //name won't be changed if bigger than 0
+        callerRef.sendMessage(Message.raw("[CivGuild] Cannot set name: " + Instant.ofEpochSecond(cooldown).toString() + " cooldown remaining"));
+        return;
+        }
+
         //Save changes
         DataStorage.getInstance().saveData(guilds);
         //Announce & Log
@@ -240,17 +245,37 @@ public class GuildManager {
             callerRef.sendMessage(Message.raw("[CivGuild] You don't have permission for this"));
             return;
         }
-        //Check cooldown
-        //TODO check cooldown + check if spawn is a viable location?
-        //All OK - set spawn
-        guild.setSpawn(coords);
+        //All OK - set spawn change if cooldown permits
+        long cooldown = guild.setSpawnpoint(coords);
+        if (cooldown > 0) { //spawn won't be changed if bigger than 0
+            callerRef.sendMessage(Message.raw("[CivGuild] Cannot set spawn: " + Instant.ofEpochSecond(cooldown).toString() + " cooldown remaining"));
+            return;
+        }
         //Save changes
         DataStorage.getInstance().saveData(guilds);
         //Announce & Log
         guild.notifyMembers("Default guild spawnpoint has been set to (" + coords.x + ", " + coords.y + ", " + coords.z + ")"); //TODO round these values?
         logger.at(Level.INFO).log(guild.getName() + " spawn has been set to (" + coords.x + ", " + coords.y + ", " + coords.z + ")");
     }
-
+    //Sets the colour of a guild
+    public void setColour(PlayerRef callerRef, Guild guild, Color colour) {
+        //Check Caller
+        PermChecker permChecker = new PermChecker(callerRef, guild);
+        if (!(permChecker.isOP() || (permChecker.isInGuild() && permChecker.getRank().canSetColour()))){ //caller is OP OR (in this guild AND has setColour permission)
+            callerRef.sendMessage(Message.raw("[CivGuild] You don't have permission for this"));
+            return;
+        }
+        //All OK - change colour if cooldown permits
+        long cooldown = guild.setColour(colour);
+        if (cooldown > 0) { //Colour won't be changed if bigger than 0
+            callerRef.sendMessage(Message.raw("[CivGuild] Cannot set colour: " + Instant.ofEpochSecond(cooldown).toString() + " cooldown remaining"));
+            return;
+        }
+        //Save & announce
+        DataStorage.getInstance().saveData(guilds);
+        guild.notifyMembers("Guild colour changed");
+        logger.at(Level.INFO).log(guild.getName() + " colour has been set to " + colour.toString());
+    }
 
     ///Invite System Methods, the caller is the player being affected
     //Sends request from caller to the given guild
