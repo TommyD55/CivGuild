@@ -101,7 +101,7 @@ public class DataStorage {
                 //Guild Data
                 for (JsonElement guildElement : root.getAsJsonArray("guild")) { //run through JSON elements in the guild data file
                     JsonObject guildObj = guildElement.getAsJsonObject(); //json element to json object
-                    logger.at(Level.INFO).log("starting guild read");
+
                     UUID guildUuid = UUID.fromString(guildObj.get("guildUuid").getAsString()); //Guild UUID
                     long createdTimestamp = guildObj.get("createdTimestamp").getAsLong();
                     String name = guildObj.get("name").getAsString(); //Guild name
@@ -111,7 +111,7 @@ public class DataStorage {
                     Color colour = new Color(guildObj.get("r").getAsInt(), guildObj.get("g").getAsInt(), guildObj.get("b").getAsInt());
                     long colorTimestamp = guildObj.get("colourTimestamp").getAsLong();
                     //TODO any other guild variables
-                    logger.at(Level.INFO).log("finished guild read");
+
                     //Member Data
                     Map<UUID, GuildMember> members = new HashMap<>(); //temp for storing members
                     for (JsonElement memberElement : guildObj.getAsJsonArray("member")) { //run through JSON sub-elements in the guild data file

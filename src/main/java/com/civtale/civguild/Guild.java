@@ -179,7 +179,7 @@ public class Guild {
         if (playerRef == null) { //Means player is offline, skip this message
             return;
         }
-        playerRef.sendMessage(Message.raw("[" + name + "] " + message).color(colour));
+        playerRef.sendMessage(Message.raw("[" + name + "] " + message).color(colour).italic(true));
     }
 
     @Override

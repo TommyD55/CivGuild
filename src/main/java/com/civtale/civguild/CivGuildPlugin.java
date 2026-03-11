@@ -11,6 +11,7 @@ import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import com.hypixel.hytale.server.core.permissions.PermissionsModule;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
+import com.hypixel.hytale.server.core.plugin.PluginManager;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -19,10 +20,12 @@ import java.util.logging.Level;
 
 public class CivGuildPlugin extends JavaPlugin {
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
+    private final PlayerJoinListener playerJoinListener;
 
     public CivGuildPlugin(JavaPluginInit init) {
         super(init);
         LOGGER.atInfo().log("%s version %s", this.getName(), this.getManifest().getVersion().toString());
+        playerJoinListener = new PlayerJoinListener(LOGGER);
     }
 
     @Override
@@ -41,10 +44,7 @@ public class CivGuildPlugin extends JavaPlugin {
             //Registers
             this.getCommandRegistry().registerCommand(new CivGuildCommand()); //CivGuild Command
             this.getEventRegistry().registerGlobal(PlayerChatEvent.class, ChatListener::onPlayerChat); //Chat listener
-            PlayerJoinListener var10002 = new PlayerJoinListener(LOGGER); //Player join listener
-            EventRegistry var10000 = this.getEventRegistry();
-            Objects.requireNonNull(var10002);
-            var10000.registerGlobal(PlayerReadyEvent.class, var10002::onPlayerReady);
+            this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, playerJoinListener::onPlayerReady); //Player Ready Listener
 
             LOGGER.at(Level.INFO).log("Successfully setup");
 

@@ -12,7 +12,7 @@ public class ChatListener {
         Guild guild = GuildManager.getInstance().getGuildByMember(sender.getUuid());
         if (guild != null) {
             event.setFormatter((playerRef, message) -> Message.join(//transform the chat message
-                    Message.raw("[" + guild.getName() + "] " + playerRef.getUsername() + ": " + message).color(guild.getColour()) //Add guild name and change colour of the message
+                    Message.raw("[" + guild.getName() + "]" + playerRef.getUsername() + ": " + message).color(guild.getColour()) //Add guild name and change colour of the message
             ));
         }
     }

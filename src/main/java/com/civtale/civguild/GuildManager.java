@@ -1,13 +1,20 @@
 package com.civtale.civguild;
 
 import com.civtale.civguild.util.DataStorage;
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.protocol.Vector3d;
 import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.entity.nameplate.Nameplate;
 import com.hypixel.hytale.server.core.permissions.PermissionsModule;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.Universe;
+import com.hypixel.hytale.server.core.universe.world.World;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import java.awt.*;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalField;
@@ -84,6 +91,7 @@ public class GuildManager {
         Guild guild = new Guild(guildName, leaderRef);
         guilds.put(guild.getUuid(), guild); //save guild against guild uuid
         players.put(leaderRef.getUuid(), guild.getUuid()); //save player uuid against guild uuid
+        updatePlayerNameplate(guild, leaderRef.getUuid()); //Player status has changed so update their nametag
         //Save changes //TODO a better way than rewriting entire files? May need individual files for each player/guild or access only a specific GuildObj
         DataStorage.getInstance().saveData(guilds);
         //Announce & Log
@@ -103,7 +111,7 @@ public class GuildManager {
         //All OK - Disband guild
         for (GuildMember member : guild.getMembers()) { //run through members and remove all
             players.remove(member.getPlayerUuid());
-            //TODO update player nametags
+            updatePlayerNameplate(null, member.getPlayerUuid()); //Player status has changed so update their nametag
         }
         String guildName = guild.getName();
         guild.notifyMembers("Has been disbanded");
@@ -133,6 +141,7 @@ public class GuildManager {
         invites.remove(playerRef.getUuid()); //removes the player's pending invite if it exists
         guild.addMember(playerRef);
         players.put(playerRef.getUuid(), guild.getUuid());
+        updatePlayerNameplate(guild, playerRef.getUuid()); //Player status has changed so update their nametag
         //Save changes
         DataStorage.getInstance().saveData(guilds);
         //Announce & Log
@@ -168,6 +177,7 @@ public class GuildManager {
         //All OK - Remove player
         guild.removeMember(memberRef.getUuid());
         players.remove(memberRef.getUuid());
+        updatePlayerNameplate(null, memberRef.getUuid()); //Player status has changed so update their nametag
         //Save changes
         DataStorage.getInstance().saveData(guilds);
         //Announce & Log
@@ -207,6 +217,7 @@ public class GuildManager {
         }
         //All OK - Assign rank
         guild.assignRank(memberRef.getUuid(), rank);
+        updatePlayerNameplate(guild, memberRef.getUuid()); //Player status has changed so update their nametag
         //Save Changes
         DataStorage.getInstance().saveData(guilds);
         //Announce & Log
@@ -233,12 +244,15 @@ public class GuildManager {
         String oldName = guild.getName();
         long cooldown = guild.setName(newName);
         if (cooldown > 0) { //name won't be changed if bigger than 0
-        callerRef.sendMessage(Message.raw("[CivGuild] Cannot set name: " + Instant.ofEpochSecond(cooldown).toString() + " cooldown remaining"));
+        callerRef.sendMessage(Message.raw("[CivGuild] Cannot set name: " + Duration.ofSeconds(cooldown) + " cooldown remaining"));
         return;
         }
 
         //Save changes
         DataStorage.getInstance().saveData(guilds);
+        for(GuildMember member : guild.getMembers()) { //Player status has changed so update their nametag
+            updatePlayerNameplate(guild, member.getPlayerUuid());
+        }
         //Announce & Log
         guild.notifyMembers("Guild " + oldName + " has been renamed to " + guild.getName());
         logger.at(Level.INFO).log("Guild" + oldName + " has been renamed to " + guild.getName());
@@ -255,7 +269,7 @@ public class GuildManager {
         //All OK - set spawn change if cooldown permits
         long cooldown = guild.setSpawnpoint(coords);
         if (cooldown > 0) { //spawn won't be changed if bigger than 0
-            callerRef.sendMessage(Message.raw("[CivGuild] Cannot set spawn: " + Instant.ofEpochSecond(cooldown).toString() + " cooldown remaining"));
+            callerRef.sendMessage(Message.raw("[CivGuild] Cannot set spawn: " + Duration.ofSeconds(cooldown) + " cooldown remaining"));
             return;
         }
         //Save changes
@@ -275,7 +289,7 @@ public class GuildManager {
         //All OK - change colour if cooldown permits
         long cooldown = guild.setColour(colour);
         if (cooldown > 0) { //Colour won't be changed if bigger than 0
-            callerRef.sendMessage(Message.raw("[CivGuild] Cannot set colour: " + Instant.ofEpochSecond(cooldown).toString() + " cooldown remaining"));
+            callerRef.sendMessage(Message.raw("[CivGuild] Cannot set colour: " + Duration.ofSeconds(cooldown) + " cooldown remaining"));
             return;
         }
         //Save & announce
@@ -362,7 +376,7 @@ public class GuildManager {
         //Get invites
         for (UUID uuid : invites.keySet()) {
             if (invites.get(uuid) == guild.getUuid()) {
-                String username = guild.getMember(uuid).getUsername();
+                String username = Objects.requireNonNull(Universe.get().getPlayer(uuid)).getUsername(); //TODO won't work if player is offline
                 guildRequests.add(username); //save player's name
             }
         }
@@ -407,5 +421,32 @@ public class GuildManager {
             return "This guild already exists";
         }
         return null; // all checks passed
+    }
+    //Updates the given player's nameplate
+    public void updatePlayerNameplate(Guild guild, UUID uuid) {
+        PlayerRef playerRef = Universe.get().getPlayer(uuid);
+        if (playerRef == null) { //player is most likely offline so don't need to update
+            return;
+        }
+        String displayText = playerRef.getUsername();
+        if (guild != null) { //Update player nameplate if they are in a guild
+            GuildRank rank = guild.getMember(uuid).getRank();
+            if (rank.getPermissionLevel() > 1) { //add rank if higher than member TODO shorten this?
+                displayText = "[" + rank.getDisplayName() + "]" + displayText;
+            }
+            displayText = "[" + guild.getName() + "]" + displayText; //add guild name
+        }
+
+        //Thread safe edit component
+        Ref<EntityStore> ref = playerRef.getReference();
+        assert ref != null;
+        Store<EntityStore> store = ref.getStore();
+        assert playerRef.getWorldUuid() != null;
+        World world = Universe.get().getWorld(playerRef.getWorldUuid());
+        assert world != null;
+        String finalDisplayText = displayText;
+        world.execute(() -> {
+            Objects.requireNonNull(store.getComponent(ref, Nameplate.getComponentType())).setText(finalDisplayText); //TODO colour support?
+        });
     }
 }
