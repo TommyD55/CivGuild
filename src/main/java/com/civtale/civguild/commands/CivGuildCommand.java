@@ -14,6 +14,7 @@ public class CivGuildCommand extends AbstractCommandCollection {
         addSubCommand(new RemoveCommand());
         addSubCommand(new RankCommand());
         addSubCommand(new RenameCommand());
+        addSubCommand(new ColourCommand());
         addSubCommand(new SetspawnCommand());
         //Commands to target the caller player
         addSubCommand(new UICommand());

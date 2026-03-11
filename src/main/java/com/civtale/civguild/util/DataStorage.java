@@ -48,7 +48,9 @@ public class DataStorage {
                 guildObj.addProperty("createdTimestamp", guild.getCreatedTimestamp());
                 guildObj.addProperty("name", guild.getName());
                 guildObj.addProperty("nameTimestamp", guild.getNameTimestamp());
-                guildObj.addProperty("colour", guild.getColour().toString());
+                guildObj.addProperty("r", guild.getColour().getRed()); //colour must be decoded into separate ints
+                guildObj.addProperty("g", guild.getColour().getGreen());
+                guildObj.addProperty("b", guild.getColour().getBlue());
                 guildObj.addProperty("colourTimestamp", guild.getColourTimestamp());
                 guildObj.addProperty("spx", guild.getSpawnpoint().x); //Hytale Vector3d can't decode from string so save as doubles
                 guildObj.addProperty("spy", guild.getSpawnpoint().y);
@@ -99,17 +101,17 @@ public class DataStorage {
                 //Guild Data
                 for (JsonElement guildElement : root.getAsJsonArray("guild")) { //run through JSON elements in the guild data file
                     JsonObject guildObj = guildElement.getAsJsonObject(); //json element to json object
-
+                    logger.at(Level.INFO).log("starting guild read");
                     UUID guildUuid = UUID.fromString(guildObj.get("guildUuid").getAsString()); //Guild UUID
                     long createdTimestamp = guildObj.get("createdTimestamp").getAsLong();
                     String name = guildObj.get("name").getAsString(); //Guild name
                     long nameTimestamp = guildObj.get("nameTimestamp").getAsLong();
                     Vector3d spawnpoint = new Vector3d(guildObj.get("spx").getAsDouble(), guildObj.get("spy").getAsDouble(), guildObj.get("spz").getAsDouble());
                     long spawnTimestamp = guildObj.get("spawnTimestamp").getAsLong();
-                    Color colour = Color.decode(guildObj.get("colour").getAsString());
+                    Color colour = new Color(guildObj.get("r").getAsInt(), guildObj.get("g").getAsInt(), guildObj.get("b").getAsInt());
                     long colorTimestamp = guildObj.get("colourTimestamp").getAsLong();
                     //TODO any other guild variables
-
+                    logger.at(Level.INFO).log("finished guild read");
                     //Member Data
                     Map<UUID, GuildMember> members = new HashMap<>(); //temp for storing members
                     for (JsonElement memberElement : guildObj.getAsJsonArray("member")) { //run through JSON sub-elements in the guild data file
@@ -136,7 +138,7 @@ public class DataStorage {
             }
 
         } catch (Exception e) {
-            logger.at(Level.SEVERE).log("Could not load data");
+            logger.at(Level.SEVERE).log("Could not load data: " + e.getMessage());
         }
     }
 

@@ -11,11 +11,13 @@ import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.nameplate.Nameplate;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
+import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.WorldMapTracker;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 
 public class PlayerJoinListener {
@@ -29,27 +31,24 @@ public class PlayerJoinListener {
             Player player = event.getPlayer();
             WorldMapTracker mapTracker = player.getWorldMapTracker();
 
-            assert player.getReference() != null; //must access components to edit the player
-            Ref<EntityStore> ref = player.getReference();
-            Store<EntityStore> store = ref.getStore();
-            UUID uuid = Objects.requireNonNull(store.getComponent(ref, UUIDComponent.getComponentType())).getUuid(); //TODO has to be a better way to retrieve UUID
-
+            UUID uuid = getUUID(player);
             Guild guild = GuildManager.getInstance().getGuildByMember(uuid);
             updateMapFilter(uuid, mapTracker, guild); //update map filter
 
-            if (guild != null) { //Update player nameplate if they are in a guild
-                String displayTitle = "[" + guild.getName() + "]"; //add guild name
-                GuildRank rank = guild.getMember(uuid).getRank();
-                if (rank.getPermissionLevel() > 1){ //add rank if higher than member #TODO shorten this?
-                    displayTitle += "[" + rank.getDisplayName() + "]";
-                }
-                String playerName = player.getDisplayName();
-                Objects.requireNonNull(store.getComponent(ref, Nameplate.getComponentType())).setText(displayTitle + playerName); //TODO colour not yet supported?
+            if (guild == null) { //Update player nameplate if they are in a guild
+                return;
+            }
+            String displayText = "[" + guild.getName() + "]"; //add guild name
+            GuildRank rank = guild.getMember(uuid).getRank();
+            if (rank.getPermissionLevel() > 1){ //add rank if higher than member #TODO shorten this?
+                displayText += "[" + rank.getDisplayName() + "]";
+            }
+            displayText += player.getDisplayName();
+            updatePlayerNameplate(player, displayText); //TODO colour not yet supported?
 
-                GuildMember member = guild.getMember(uuid); //ensure saved player username matches
-                if (!playerName.equals(member.getUsername())) {
-                    member.setUsername(playerName);
-                }
+            GuildMember member = guild.getMember(uuid); //ensure saved player username matches
+            if (!player.getDisplayName().equals(member.getUsername())) {
+                member.setUsername(player.getDisplayName());
             }
 
         } catch (Exception e) {
@@ -66,7 +65,7 @@ public class PlayerJoinListener {
         try {
             WorldMapTracker mapTracker = player.getWorldMapTracker();
             assert player.getReference() != null;
-            UUID uuid = Objects.requireNonNull(player.getReference().getStore().getComponent(player.getReference(), UUIDComponent.getComponentType())).getUuid(); //TODO has to be a better way to retrieve UUID
+            UUID uuid = getUUID(player);
             updateMapFilter(uuid, mapTracker, GuildManager.getInstance().getGuildByMember(uuid));
 
         } catch (Exception e) {
@@ -85,6 +84,30 @@ public class PlayerJoinListener {
                 return true;
             }
             return !playerGuild.hasMember(otherPlayerUUID); //don't show if not in same guild
+        });
+    }
+
+    //Must access player UUID component using thread-safe method //TODO player.getUuid() is deprecated, surely a better way of getting it?
+    private UUID getUUID(Player player) {
+        assert player.getReference() != null; //must access components to edit the player
+        Ref<EntityStore> ref = player.getReference();
+        Store<EntityStore> store = ref.getStore();
+        World world = player.getWorld();
+        assert world != null;
+        AtomicReference<UUID> uuid = new AtomicReference<>();
+        world.execute(()->{
+            uuid.set(Objects.requireNonNull(store.getComponent(ref, UUIDComponent.getComponentType())).getUuid());});
+        return uuid.get();
+    }
+    //Access component using thread-safe method
+    private void updatePlayerNameplate(Player player, String displayText) {
+        Ref<EntityStore> ref = player.getReference();
+        assert ref != null;
+        Store<EntityStore> store = ref.getStore();
+        World world = player.getWorld();
+        assert world != null;
+        world.execute(()->{
+            Objects.requireNonNull(store.getComponent(ref, Nameplate.getComponentType())).setText(displayText);
         });
     }
 }

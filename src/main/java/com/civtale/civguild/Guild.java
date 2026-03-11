@@ -103,7 +103,7 @@ public class Guild {
     }
 
     public long setName(String name) {
-        long delta = nameTimestamp - Instant.now().getEpochSecond() - cooldown;
+        long delta = nameTimestamp - Instant.now().getEpochSecond() + cooldown;
         if (delta < 0) {
             this.name = name;
             nameTimestamp = Instant.now().getEpochSecond();
@@ -117,7 +117,7 @@ public class Guild {
     }
 
     public long setSpawnpoint(Vector3d spawnpoint) {
-        long delta = spawnTimestamp - Instant.now().getEpochSecond() - cooldown;
+        long delta = spawnTimestamp - Instant.now().getEpochSecond() + cooldown;
         if (delta < 0) {
             this.spawnpoint = spawnpoint;
             spawnTimestamp = Instant.now().getEpochSecond();
@@ -131,7 +131,7 @@ public class Guild {
     }
 
     public long setColour(Color colour) {
-        long delta = colourTimestamp - Instant.now().getEpochSecond() - cooldown;
+        long delta = colourTimestamp - Instant.now().getEpochSecond() + cooldown;
         if (delta < 0) {
             this.colour = colour;
             colourTimestamp = Instant.now().getEpochSecond();
@@ -179,7 +179,7 @@ public class Guild {
         if (playerRef == null) { //Means player is offline, skip this message
             return;
         }
-        playerRef.sendMessage(Message.raw("[" + name + "] " + message)); //TODO guild colour
+        playerRef.sendMessage(Message.raw("[" + name + "] " + message).color(colour));
     }
 
     @Override

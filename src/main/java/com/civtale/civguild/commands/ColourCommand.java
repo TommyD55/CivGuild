@@ -22,7 +22,7 @@ public class ColourCommand extends AbstractPlayerCommand {
     private final RequiredArg<Integer> colourArg;
 
     public ColourCommand() {
-        super("colour", "Change guild colour", true);
+        super("colour", "Change guild colour");
         this.guildArg = this.withRequiredArg("guild", "Guild to recolour", ArgTypes.STRING);
         this.colourArg = this.withRequiredArg("colour", "Guild colour", ArgTypes.COLOR); //colours assigned to ints
         requirePermission("civtale.user.civguild");
