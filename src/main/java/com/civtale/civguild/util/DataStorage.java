@@ -5,7 +5,6 @@ import com.civtale.civguild.GuildMember;
 import com.civtale.civguild.GuildRank;
 import com.google.gson.*;
 import com.hypixel.hytale.logger.HytaleLogger;
-import com.hypixel.hytale.protocol.Vector3d;
 
 import java.awt.*;
 import java.io.*;
@@ -60,7 +59,7 @@ public class DataStorage {
 
                 //Member Data
                 JsonArray membersArray = new JsonArray(); //run through each member
-                for (GuildMember member : guild.getMembers()) { //build a JSON element and add the member's data to it
+                for (GuildMember member : guild.getMembers().values()) { //build a JSON element and add the member's data to it
                     JsonObject memberObj = new JsonObject();
                     memberObj.addProperty("playerUuid", member.getPlayerUuid().toString());
                     memberObj.addProperty("rank", member.getRank().toString()); //NOTE toString used since loadData() uses valueOf()
@@ -106,7 +105,7 @@ public class DataStorage {
                     long createdTimestamp = guildObj.get("createdTimestamp").getAsLong();
                     String name = guildObj.get("name").getAsString(); //Guild name
                     long nameTimestamp = guildObj.get("nameTimestamp").getAsLong();
-                    Vector3d spawnpoint = new Vector3d(guildObj.get("spx").getAsDouble(), guildObj.get("spy").getAsDouble(), guildObj.get("spz").getAsDouble());
+                    com.hypixel.hytale.math.vector.Vector3d spawnpoint = new com.hypixel.hytale.math.vector.Vector3d(guildObj.get("spx").getAsDouble(), guildObj.get("spy").getAsDouble(), guildObj.get("spz").getAsDouble());
                     long spawnTimestamp = guildObj.get("spawnTimestamp").getAsLong();
                     Color colour = new Color(guildObj.get("r").getAsInt(), guildObj.get("g").getAsInt(), guildObj.get("b").getAsInt());
                     long colorTimestamp = guildObj.get("colourTimestamp").getAsLong();

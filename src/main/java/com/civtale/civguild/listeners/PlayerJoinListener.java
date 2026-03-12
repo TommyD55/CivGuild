@@ -5,6 +5,7 @@ import com.civtale.civguild.GuildManager;
 import com.civtale.civguild.GuildMember;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.event.events.player.AddPlayerToWorldEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import com.hypixel.hytale.server.core.universe.world.WorldMapTracker;
 
@@ -17,6 +18,7 @@ public class PlayerJoinListener {
         PlayerJoinListener.logger = logger;
     }
 
+    //Player ready in world - player entity must be set up before being edited
     public void onPlayerReady(PlayerReadyEvent event) {
         try {
             Player player = event.getPlayer();
@@ -24,48 +26,39 @@ public class PlayerJoinListener {
             //UUID uuid = getUUID(player);
             UUID uuid = player.getUuid(); //TODO Non-deprecated method??
             GuildManager guildManager = GuildManager.getInstance();
-            Guild guild = guildManager.getGuildByMember(uuid);
+            Guild guild = guildManager.getGuildByMember(uuid); //null if no guild
 
-            updateMapFilter(uuid, mapTracker, guild); //update map filter
-            guildManager.updatePlayerNameplate(guild, uuid); //update nameplate
+            //Set Map filter
+            mapTracker.setPlayerMapFilter((otherPlayer) -> { // This lambda runs everytime the map needs to set the filter TODO more documentation on this would be good
+                UUID otherPlayerUUID = otherPlayer.getUuid();
+                if (otherPlayerUUID == uuid) { //show if same player
+                    return false;
+                }
+                if (guild == null){ // this player isn't in a guild, don't show them
+                    return true;
+                }
+                return !guild.hasMember(otherPlayerUUID); //only show if in same guild
+            });
 
-            GuildMember member = guild.getMember(uuid); //ensure saved player username matches
-            if (!player.getDisplayName().equals(member.getUsername())) {
-                member.setUsername(player.getDisplayName());
+
+            if (guild != null) {
+                //ensure saved player username matches
+                GuildMember member = guild.getMember(uuid);
+                String username = player.getDisplayName();
+                if (!username.equals(member.getUsername())) {
+                    member.setUsername(username);
+                }
+                //Notify guild that this player has joined
+                guild.notifyMembers(username + " joined the server");
             }
+
+            //update nameplate regardless of guild status
+            guildManager.updatePlayerNameplate(guild, uuid);
+
 
         } catch (Exception e) {
             logger.at(Level.WARNING).log("Could not initialize world map tracker & nameplate: " + e.getMessage());
         }
     }
 
-    private static void updateMapFilter(UUID playerUuid, WorldMapTracker mapTracker, Guild playerGuild) {
-        mapTracker.setPlayerMapFilter((otherPlayer) -> { // This lambda runs everytime the map needs to set the filter TODO more documentation on this would be good
-            UUID otherPlayerUUID = otherPlayer.getUuid();
-            if (otherPlayerUUID == playerUuid) { //show if same player
-                return false;
-            }
-            if (playerGuild == null){ // this player isn't in a guild, don't show them
-                return true;
-            }
-            return !playerGuild.hasMember(otherPlayerUUID); //only show if in same guild
-        });
-    }
 }
-
-
-/*
-    //Must access player UUID component using thread-safe method //TODO player.getUuid() is deprecated, surely a better way of getting it?
-    private static UUID getUUID(Player player) {
-        assert player.getReference() != null; //must access components to edit the player
-        Ref<EntityStore> ref = player.getReference();
-        Store<EntityStore> store = ref.getStore();
-        World world = player.getWorld();
-        assert world != null;
-        AtomicReference<UUID> uuid = new AtomicReference<>();
-        world.execute(()->{
-            uuid.set(Objects.requireNonNull(store.getComponent(ref, UUIDComponent.getComponentType())).getUuid());});
-        logger.at(Level.WARNING).log("player: " + player.toString() + "ref: " + ref.toString() + "store" + store.toString() + "world: " + world.toString());
-        return uuid.get();
-    }*/
-

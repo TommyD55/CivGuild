@@ -4,8 +4,11 @@ import com.civtale.civguild.util.DataStorage;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
-import com.hypixel.hytale.protocol.Vector3d;
 import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.entity.entities.player.data.PlayerConfigData;
+import com.hypixel.hytale.server.core.entity.entities.player.data.PlayerRespawnPointData;
+import com.hypixel.hytale.server.core.entity.entities.player.data.PlayerWorldData;
 import com.hypixel.hytale.server.core.entity.nameplate.Nameplate;
 import com.hypixel.hytale.server.core.permissions.PermissionsModule;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
@@ -15,9 +18,6 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import java.awt.*;
 import java.time.Duration;
-import java.time.Instant;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalField;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -109,9 +109,10 @@ public class GuildManager {
             return;
         }
         //All OK - Disband guild
-        for (GuildMember member : guild.getMembers()) { //run through members and remove all
+        for (GuildMember member : guild.getMembers().values()) { //run through members and remove all
             players.remove(member.getPlayerUuid());
             updatePlayerNameplate(null, member.getPlayerUuid()); //Player status has changed so update their nametag
+            removeGuildRespawn(member.getPlayerUuid()); //remove spawnpoint
         }
         String guildName = guild.getName();
         guild.notifyMembers("Has been disbanded");
@@ -170,14 +171,16 @@ public class GuildManager {
             }
         }
         //Check Member
-        if (guild.getLeaderUuids().contains(memberRef.getUuid()) && guild.getLeaderUuids().size() == 1) { //cannot kick a leader if there is only one
+        UUID uuid = memberRef.getUuid();
+        if (guild.getLeaderUuids().contains(uuid) && guild.getLeaderUuids().size() == 1) { //cannot kick a leader if there is only one
             callerRef.sendMessage(Message.raw("[CivGuild] Cannot remove member: Member is the only guild leader, assign a new leader first"));
             return;
         }
         //All OK - Remove player
-        guild.removeMember(memberRef.getUuid());
-        players.remove(memberRef.getUuid());
-        updatePlayerNameplate(null, memberRef.getUuid()); //Player status has changed so update their nametag
+        guild.removeMember(uuid);
+        players.remove(uuid);
+        updatePlayerNameplate(null, uuid); //Player status has changed so update their nametag
+        removeGuildRespawn(uuid); //remove respawn point
         //Save changes
         DataStorage.getInstance().saveData(guilds);
         //Announce & Log
@@ -250,7 +253,7 @@ public class GuildManager {
 
         //Save changes
         DataStorage.getInstance().saveData(guilds);
-        for(GuildMember member : guild.getMembers()) { //Player status has changed so update their nametag
+        for(GuildMember member : guild.getMembers().values()) { //Player status has changed so update their nametag
             updatePlayerNameplate(guild, member.getPlayerUuid());
         }
         //Announce & Log
@@ -259,7 +262,7 @@ public class GuildManager {
     }
 
     //Sets the spawn of the given guild to the given coords
-    public void setSpawn(PlayerRef callerRef, Guild guild, Vector3d coords) {
+    public void setSpawn(PlayerRef callerRef, Guild guild, com.hypixel.hytale.math.vector.Vector3d coords) {
         //Check Caller
         PermChecker permChecker = new PermChecker(callerRef, guild);
         if (!(permChecker.isOP() || (permChecker.isInGuild() && permChecker.getRank().canSetSpawn()))){ //caller is OP OR (in this guild AND has setSpawn permission)
@@ -271,6 +274,9 @@ public class GuildManager {
         if (cooldown > 0) { //spawn won't be changed if bigger than 0
             callerRef.sendMessage(Message.raw("[CivGuild] Cannot set spawn: " + Duration.ofSeconds(cooldown) + " cooldown remaining"));
             return;
+        }
+        for (UUID uuid : guild.getMembers().keySet()){ //remove the spawnpoint from all members, NOTE if they respawn they will receive it
+            removeGuildRespawn(uuid);
         }
         //Save changes
         DataStorage.getInstance().saveData(guilds);
@@ -431,10 +437,11 @@ public class GuildManager {
         String displayText = playerRef.getUsername();
         if (guild != null) { //Update player nameplate if they are in a guild
             GuildRank rank = guild.getMember(uuid).getRank();
-            if (rank.getPermissionLevel() > 1) { //add rank if higher than member TODO shorten this?
-                displayText = "[" + rank.getDisplayName() + "]" + displayText;
+            if (rank.getPermissionLevel() > 1) { //add [guild][rank] if higher than member
+                displayText = "[" + rank.getDisplayName() + "][" + guild.getName()+ "]\n" + displayText; //TODO multiline support \n doesnt work currently
+            } else { //otherwise just [guild]
+                displayText = "[" + guild.getName() + "]\n" + displayText;
             }
-            displayText = "[" + guild.getName() + "]" + displayText; //add guild name
         }
 
         //Thread safe edit component
@@ -447,6 +454,45 @@ public class GuildManager {
         String finalDisplayText = displayText;
         world.execute(() -> {
             Objects.requireNonNull(store.getComponent(ref, Nameplate.getComponentType())).setText(finalDisplayText); //TODO colour support?
+        });
+    }
+
+    //Removes a guild spawn point from a player's respawn data
+    private void removeGuildRespawn(UUID uuid) {
+        PlayerRef playerRef = Universe.get().getPlayer(uuid);
+        if (playerRef == null) { //TODO edit offline playerdata?
+            return;
+        }
+        Ref<EntityStore> ref = playerRef.getReference();
+        Store<EntityStore> store = Objects.requireNonNull(ref).getStore();
+        Player player = store.getComponent(ref, Player.getComponentType());
+        assert player != null;
+        PlayerConfigData config = player.getPlayerConfigData();
+        World world = player.getWorld();
+        assert world != null;
+        PlayerWorldData worldData = config.getPerWorldData(world.getName()); //player's config data in this world
+        if (worldData.getRespawnPoints() == null) { return;} //nothing to remove
+        //Editing component so be thread-safe:
+        world.execute(() -> {
+            //Find the guild point
+            PlayerRespawnPointData[] respawnPoints = worldData.getRespawnPoints();
+            int marker = 10; //must be a high int to not run in case guild spawnpoint doesn't exist
+            for (int i = 0; i < respawnPoints.length; i++) { //run through respawn point objects
+                if (respawnPoints[i].getName().equals("Guild Spawnpoint")){ //check if this is the guild spawnpoint
+                    marker = i;
+                }
+            }
+            //make a new array excluding the guild point
+            PlayerRespawnPointData[] newRespawnPoints = new PlayerRespawnPointData[respawnPoints.length-1];
+            int tracker = 0;
+            for (PlayerRespawnPointData respawnPoint : worldData.getRespawnPoints()) {
+                if (tracker != marker){
+                    newRespawnPoints[tracker] = respawnPoint;
+                    tracker++;
+                }
+            } //update player spawn points
+            worldData.setRespawnPoints(newRespawnPoints);
+            config.markChanged();
         });
     }
 }

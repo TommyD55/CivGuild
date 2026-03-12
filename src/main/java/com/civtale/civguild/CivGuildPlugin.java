@@ -2,19 +2,17 @@ package com.civtale.civguild;
 
 import com.civtale.civguild.commands.CivGuildCommand;
 import com.civtale.civguild.listeners.ChatListener;
+import com.civtale.civguild.listeners.DeathListener;
 import com.civtale.civguild.listeners.PlayerJoinListener;
 import com.civtale.civguild.util.DataStorage;
-import com.hypixel.hytale.event.EventRegistry;
 import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.server.core.event.events.player.AddPlayerToWorldEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerChatEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import com.hypixel.hytale.server.core.permissions.PermissionsModule;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
-import com.hypixel.hytale.server.core.plugin.PluginManager;
 
-import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 
@@ -44,6 +42,7 @@ public class CivGuildPlugin extends JavaPlugin {
             //Registers
             this.getCommandRegistry().registerCommand(new CivGuildCommand()); //CivGuild Command
             this.getEventRegistry().registerGlobal(PlayerChatEvent.class, ChatListener::onPlayerChat); //Chat listener
+            this.getEventRegistry().registerGlobal(AddPlayerToWorldEvent.class, (e) -> e.setBroadcastJoinMessage(false)); //Stops broadcast message being sent
             this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, playerJoinListener::onPlayerReady); //Player Ready Listener
 
             LOGGER.at(Level.INFO).log("Successfully setup");
@@ -51,5 +50,11 @@ public class CivGuildPlugin extends JavaPlugin {
         } catch (Exception e) {
             LOGGER.at(Level.SEVERE).log("Failed setup: ", e.getMessage());
         }
+    }
+
+    @Override //Store systems register here
+    protected void start() {
+        super.start();
+        this.getEntityStoreRegistry().registerSystem(new DeathListener()); //Register Death Listener
     }
 }

@@ -83,7 +83,7 @@ public class InfoCommand extends AbstractCommandCollection {
                 return CompletableFuture.completedFuture(null);
             }
             commandContext.sendMessage(Message.raw("[CivGuild] Listing members..."));
-            guild.getMembers().forEach((member) -> {
+            guild.getMembers().values().forEach((member) -> {
                 String memberName = member.getUsername();
                 commandContext.sendMessage(Message.raw("[" + member.getRank().getDisplayName() + "] " + memberName)); //[RANK] Name
             });

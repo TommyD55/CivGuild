@@ -2,7 +2,7 @@ package com.civtale.civguild;
 
 public enum GuildRank {
     MEMBER("Member", 1),
-    COLEADER("Co-Leader", 2),
+    COLEADER("Coleader", 2),
     LEADER("Leader", 3);
 
     private final String displayName;

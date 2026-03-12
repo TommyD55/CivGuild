@@ -1,6 +1,5 @@
 package com.civtale.civguild;
 
-import com.hypixel.hytale.protocol.Vector3d;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
@@ -16,7 +15,7 @@ public class Guild {
     private final Set<UUID> leaderUuids;
     //Properties
     private String name; //guild name, can be changed
-    private Vector3d spawnpoint;
+    private com.hypixel.hytale.math.vector.Vector3d spawnpoint;
     private Color colour;
     //Timestamps
     private final long createdTimestamp;
@@ -32,7 +31,7 @@ public class Guild {
         this.members.put(leaderRef.getUuid(), new GuildMember(leaderRef, GuildRank.LEADER)); //save the leader as the first member
         this.leaderUuids = new HashSet<>();
         this.leaderUuids.add(leaderRef.getUuid());
-        this.spawnpoint = new Vector3d(0, 0, 0);
+        this.spawnpoint = leaderRef.getTransform().getPosition(); //leader's current position by default
         this.colour = Color.GRAY;
         this.createdTimestamp = Instant.now().getEpochSecond();
         this.nameTimestamp = 0;
@@ -40,7 +39,7 @@ public class Guild {
         this.colourTimestamp = 0;
     }
     //Constructor for guild from save
-    public Guild(UUID uuid, Map<UUID, GuildMember> members, String name, Vector3d spawnpoint, Color colour,
+    public Guild(UUID uuid, Map<UUID, GuildMember> members, String name, com.hypixel.hytale.math.vector.Vector3d spawnpoint, Color colour,
                  long createdTimestamp, long nameTimestamp, long spawnTimestamp, long colourTimestamp) {
         this.uuid = uuid; //get a unique UUID for this guild
         this.members = members;
@@ -65,7 +64,7 @@ public class Guild {
         return uuid;
     }
 
-    public Collection<GuildMember> getMembers() { return members.values(); }
+    public Map<UUID, GuildMember> getMembers() { return members; }
 
     public GuildMember getMember(UUID uuid) { return members.get(uuid); }
 
@@ -112,11 +111,11 @@ public class Guild {
         return delta;
     }
 
-    public Vector3d getSpawnpoint() {
+    public com.hypixel.hytale.math.vector.Vector3d getSpawnpoint() {
         return this.spawnpoint;
     }
 
-    public long setSpawnpoint(Vector3d spawnpoint) {
+    public long setSpawnpoint(com.hypixel.hytale.math.vector.Vector3d spawnpoint) {
         long delta = spawnTimestamp - Instant.now().getEpochSecond() + cooldown;
         if (delta < 0) {
             this.spawnpoint = spawnpoint;
