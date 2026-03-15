@@ -24,14 +24,14 @@ public class Guild {
     private long colourTimestamp;
 
     //Constructor for new guild
-    public Guild(String name, PlayerRef leaderRef) {
+    public Guild(String name, UUID leaderUUID) {
         this.name = name;
         this.uuid = UUID.randomUUID(); //get a unique UUID for this guild
         this.members = new HashMap<>();
-        this.members.put(leaderRef.getUuid(), new GuildMember(leaderRef, GuildRank.LEADER)); //save the leader as the first member
+        this.members.put(leaderUUID, new GuildMember(leaderUUID, GuildRank.LEADER)); //save the leader as the first member
         this.leaderUuids = new HashSet<>();
-        this.leaderUuids.add(leaderRef.getUuid());
-        this.spawnpoint = leaderRef.getTransform().getPosition(); //leader's current position by default
+        this.leaderUuids.add(leaderUUID);
+        this.spawnpoint = Objects.requireNonNull(Universe.get().getPlayer(leaderUUID)).getTransform().getPosition(); //leader's current position by default
         this.colour = Color.GRAY;
         this.createdTimestamp = Instant.now().getEpochSecond();
         this.nameTimestamp = 0;
@@ -74,8 +74,8 @@ public class Guild {
         return leaderUuids;
     }
 
-    public void addMember(PlayerRef playerRef) {
-        this.members.put(playerRef.getUuid(), new GuildMember(playerRef, GuildRank.MEMBER));
+    public void addMember(UUID uuid) {
+        this.members.put(uuid, new GuildMember(uuid, GuildRank.MEMBER));
     }
 
     public void removeMember(UUID playerUuid) { //GuildManager ensures this isn't the leader

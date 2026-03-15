@@ -14,14 +14,16 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
+import java.util.UUID;
+
 
 public class RankCommand extends AbstractPlayerCommand {
-    private final RequiredArg<PlayerRef> playerArg;
+    private final RequiredArg<String> playerArg;
     private final RequiredArg<String> rankArg;
 
     public RankCommand() {
         super("rank", "Assign a rank to a guild member");
-        this.playerArg = this.withRequiredArg("player", "Player to assign rank to", ArgTypes.PLAYER_REF);
+        this.playerArg = this.withRequiredArg("player", "Player to assign rank to", ArgTypes.STRING);
         this.rankArg = this.withRequiredArg("rank", "Rank to assign", ArgTypes.STRING);
         requirePermission("civtale.user.civguild");
         addAliases("assign");
@@ -29,11 +31,16 @@ public class RankCommand extends AbstractPlayerCommand {
 
     @Override
     protected void execute(@NonNull CommandContext commandContext, @NonNull Store<EntityStore> store, @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
+        GuildManager guildManager = GuildManager.getInstance();
+        UUID uuid = guildManager.getUUIDByName(playerArg.get(commandContext));
+        if (uuid == null) {
+            playerRef.sendMessage(Message.raw("[CivGuild] Unknown player"));
+        }
         GuildRank rank = GuildRank.stringToRank(rankArg.get(commandContext));
         if (rank == null) {
             playerRef.sendMessage(Message.raw("[CivGuild] Unknown rank"));
             return;
         }
-        GuildManager.getInstance().assignRank(playerRef, playerArg.get(commandContext), rank);
+        guildManager.assignRank(playerRef.getUuid(), uuid, rank);
     }
 }

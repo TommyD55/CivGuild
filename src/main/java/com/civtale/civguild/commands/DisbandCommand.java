@@ -32,7 +32,7 @@ public class DisbandCommand extends AbstractPlayerCommand {
             playerRef.sendMessage(Message.raw("[CivGuild] Unknown guild"));
             return;
         }
-        guildManager.disbandGuild(playerRef, guild);
+        guildManager.disbandGuild(playerRef.getUuid(), guild);
 
     }
 }

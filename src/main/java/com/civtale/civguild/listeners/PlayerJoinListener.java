@@ -40,14 +40,11 @@ public class PlayerJoinListener {
                 return !guild.hasMember(otherPlayerUUID); //only show if in same guild
             });
 
+            //ensure saved player username matches
+            String username = player.getDisplayName();
+            guildManager.updateUsername(uuid, username);
 
             if (guild != null) {
-                //ensure saved player username matches
-                GuildMember member = guild.getMember(uuid);
-                String username = player.getDisplayName();
-                if (!username.equals(member.getUsername())) {
-                    member.setUsername(username);
-                }
                 //Notify guild that this player has joined
                 guild.notifyMembers(username + " joined the server");
             }

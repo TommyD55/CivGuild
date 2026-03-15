@@ -15,15 +15,17 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
+import java.util.UUID;
+
 
 public class AddCommand extends AbstractPlayerCommand {
-    private final RequiredArg<PlayerRef> playerArg;
+    private final RequiredArg<String> playerArg;
     private final RequiredArg<String> guildArg;
 
 
     public AddCommand() {
         super("add", "Add a player to a guild");
-        this.playerArg = this.withRequiredArg("player", "Player to add", ArgTypes.PLAYER_REF);
+        this.playerArg = this.withRequiredArg("player", "Player to add", ArgTypes.STRING);
         this.guildArg = this.withRequiredArg("guild", "Guild to add to", ArgTypes.STRING);
         requirePermission("civtale.admin.civguild"); // NOTE this perm is only for admins as it skips the invite system
     }
@@ -36,7 +38,11 @@ public class AddCommand extends AbstractPlayerCommand {
             playerRef.sendMessage(Message.raw("[CivGuild] Unknown guild"));
             return;
         }
-        guildManager.addMember(playerRef, guild, playerArg.get(commandContext));
+        UUID uuid = guildManager.getUUIDByName(playerArg.get(commandContext));
+        if (uuid == null) {
+            playerRef.sendMessage(Message.raw("[CivGuild] Unknown player"));
+        }
+        guildManager.addMember(playerRef.getUuid(), guild, uuid);
 
     }
 }

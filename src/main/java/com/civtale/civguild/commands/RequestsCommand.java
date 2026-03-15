@@ -24,7 +24,7 @@ public class RequestsCommand extends AbstractPlayerCommand {
     @Override
     protected void execute(@NonNull CommandContext commandContext, @NonNull Store<EntityStore> store, @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
 
-        Set<String> requests = GuildManager.getInstance().getInvitesByGuild(playerRef);
+        Set<String> requests = GuildManager.getInstance().getInvitesByGuild(playerRef.getUuid());
         if (requests.isEmpty()) {
             playerRef.sendMessage(Message.raw("[CivGuild] No pending join requests"));
             return;

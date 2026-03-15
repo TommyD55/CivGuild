@@ -36,6 +36,6 @@ public class ColourCommand extends AbstractPlayerCommand {
             playerRef.sendMessage(Message.raw("[CivGuild] Unknown guild"));
             return;
         }
-        guildManager.setColour(playerRef, guild, new Color(colourArg.get(commandContext)));
+        guildManager.setColour(playerRef.getUuid(), guild, new Color(colourArg.get(commandContext)));
     }
 }

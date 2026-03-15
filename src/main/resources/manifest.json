@@ -1,14 +1,14 @@
 {
   "Group": "CivTale",
   "Name": "CivGuild",
-  "Version": "0.1.0",
-  "Description": "Allows players to join groups to work together",
+  "Version": "0.1.1",
+  "Description": "CivGuild allows players to create, join, leave and manage guilds so they can play together or against each other",
   "Authors": [
     {
       "Name": "TommyD"
     }
   ],
-  "Website": "${plugin_website}",
+  "Website": "https://www.curseforge.com/members/tommyd55/projects",
   "ServerVersion": "2026.02.19-1a311a592",
   "Dependencies": {},
   "OptionalDependencies": {},

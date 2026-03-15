@@ -19,6 +19,6 @@ public class LeaveCommand extends AbstractPlayerCommand {
 
     @Override
     protected void execute(@NonNull CommandContext commandContext, @NonNull Store<EntityStore> store, @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
-        GuildManager.getInstance().removeMember(playerRef, playerRef, "Self removal from guild");
+        GuildManager.getInstance().removeMember(playerRef.getUuid(), playerRef.getUuid(), "Self removal from guild");
     }
 }

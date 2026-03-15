@@ -31,6 +31,6 @@ public class JoinCommand extends AbstractPlayerCommand {
             playerRef.sendMessage(Message.raw("[CivGuild] Unknown guild"));
             return;
         }
-        guildManager.joinRequest(playerRef, guild);
+        guildManager.joinRequest(playerRef.getUuid(), guild);
     }
 }

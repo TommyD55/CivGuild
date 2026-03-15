@@ -35,6 +35,6 @@ public class RenameCommand extends AbstractPlayerCommand {
             playerRef.sendMessage(Message.raw("[CivGuild] Unknown guild"));
             return;
         }
-        guildManager.renameGuild(playerRef, guild, nameArg.get(commandContext));
+        guildManager.renameGuild(playerRef.getUuid(), guild, nameArg.get(commandContext));
     }
 }

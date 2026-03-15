@@ -38,7 +38,7 @@ public class SetspawnCommand extends AbstractPlayerCommand {
             return;
         }
         com.hypixel.hytale.math.vector.Vector3d spawnCoords = new com.hypixel.hytale.math.vector.Vector3d(positionArg.get(commandContext).x, positionArg.get(commandContext).y, positionArg.get(commandContext).z); //convert to double vector
-        guildManager.setSpawn(playerRef, guild, spawnCoords);
+        guildManager.setSpawn(playerRef.getUuid(), guild, spawnCoords);
 
     }
 }
