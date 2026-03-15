@@ -35,6 +35,7 @@ public class RankCommand extends AbstractPlayerCommand {
         UUID uuid = guildManager.getUUIDByName(playerArg.get(commandContext));
         if (uuid == null) {
             playerRef.sendMessage(Message.raw("[CivGuild] Unknown player"));
+            return;
         }
         GuildRank rank = GuildRank.stringToRank(rankArg.get(commandContext));
         if (rank == null) {

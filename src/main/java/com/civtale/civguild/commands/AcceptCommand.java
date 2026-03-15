@@ -31,6 +31,7 @@ public class AcceptCommand extends AbstractPlayerCommand {
         UUID uuid = guildManager.getUUIDByName(playerArg.get(commandContext));
         if (uuid == null) {
             playerRef.sendMessage(Message.raw("[CivGuild] Unknown player"));
+            return;
         }
         guildManager.acceptJoin(playerRef.getUuid(), uuid);
     }

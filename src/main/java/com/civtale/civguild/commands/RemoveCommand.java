@@ -33,6 +33,7 @@ public class RemoveCommand extends AbstractPlayerCommand {
         UUID uuid = guildManager.getUUIDByName(playerArg.get(commandContext));
         if (uuid == null) {
             playerRef.sendMessage(Message.raw("[CivGuild] Unknown player"));
+            return;
         }
         guildManager.removeMember(playerRef.getUuid(), uuid, reasonArg.get(commandContext));
     }

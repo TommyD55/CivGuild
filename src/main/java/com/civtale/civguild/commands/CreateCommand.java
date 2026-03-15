@@ -33,6 +33,7 @@ public class CreateCommand extends AbstractPlayerCommand {
         UUID uuid = guildManager.getUUIDByName(playerArg.get(commandContext));
         if (uuid == null) {
             playerRef.sendMessage(Message.raw("[CivGuild] Unknown player"));
+            return;
         }
         guildManager.createGuild(playerRef.getUuid(), guildArg.get(commandContext), uuid);
     }
